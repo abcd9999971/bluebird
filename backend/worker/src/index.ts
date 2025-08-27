@@ -11,8 +11,24 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+import { deserializeJsonResponse } from "@prisma/client/runtime/library";
+
+export interface Env {
+	DB : DB;
+}
+
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
-	},
-} satisfies ExportedHandler<Env>;
+  async fetch(request, env) {
+    const { results } = await env.DB.prepare(
+      `SELECT text, author_id, created_at 
+       FROM test_tweets
+       ORDER BY created_at DESC 
+       LIMIT 20`
+    ).all()
+
+    return new Response(JSON.stringify(results), {
+      headers: { "Content-Type": "application/json" }
+    })
+  }
+}
+
