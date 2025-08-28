@@ -48,4 +48,4 @@ logs/
 *.swo
 
 # Post
-/post
+data/
