@@ -109,9 +109,18 @@
               :src="projectInfo?.avatar || 'https://pbs.twimg.com/profile_images/1911976807064109056/_-_IbsKQ.jpg'" 
               :alt="projectInfo?.name_ja || 'いきづらい部'" 
               class="mobile-avatar" 
-              :class="{'active': !filters.member}" 
+              :class="{'active': !filters.member && !filters.onlyLiked}" 
               @click="resetFilters"
             />
+            <!-- 手機版：いいねした日誌按鈕 -->
+            <button 
+              class="mobile-filter-btn"
+              :class="{'active': filters.onlyLiked}"
+              @click="toggleLikedFilter"
+              :title="t('filter_liked')"
+            >
+              <span class="icon">favorite</span>
+            </button>
             <!-- 手機版：成員列表 -->
             <img 
               v-for="key in characterOrder" 

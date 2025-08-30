@@ -869,6 +869,32 @@ html[data-member-theme="true"] .profile-btn:hover {
   transform: scale(1.08);
 }
 
+.mobile-filter-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.mobile-filter-btn.active {
+  border-color: var(--brand-color);
+  color: var(--brand-color);
+  transform: scale(1.08);
+}
+
+.mobile-filter-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 
 
 /* 回到頂部按鈕 */
@@ -974,40 +1000,41 @@ html[data-member-theme="true"] .profile-btn:hover {
   }
   
   .member-header { 
-    margin-bottom: 40px; 
+    margin-bottom: 80px; 
     overflow: hidden;
   }
   
   .member-banner {
-    height: 120px;
+    height: 180px;
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
   }
   
   .member-avatar { 
     width: 60px; 
     height: 60px; 
-    top: 80px; 
+    top: 120px; 
     left: var(--spacing-unit); 
     z-index: 10;
   }
   
   .member-name { 
-    top: 80px; 
+    top: 120px; 
     left: 80px; 
     font-size: 1rem; 
     z-index: 10;
   }
   
   .member-id { 
-    top: 105px; 
+    top: 145px; 
     left: 80px; 
     font-size: 0.9rem;
     z-index: 10;
   }
   
   .member-meta-top { 
-    top: 80px; 
+    top: 120px; 
     right: var(--spacing-unit); 
     z-index: 10;
   }
@@ -1018,7 +1045,8 @@ html[data-member-theme="true"] .profile-btn:hover {
   }
   
   .tweet { 
-    padding: var(--spacing-unit); 
+    padding: calc(var(--spacing-unit) / 2); 
+    gap: var(--spacing-unit);
   }
   
   .tweet-avatar { 
@@ -1026,53 +1054,94 @@ html[data-member-theme="true"] .profile-btn:hover {
     height: 40px; 
   }
   
+  .tweet-text {
+    font-size: 0.95rem;
+  }
+  
   .modal { 
     width: 95vw; 
     margin: var(--spacing-unit); 
   }
   
+  .info-card {
+    padding: calc(var(--spacing-unit) / 2);
+    font-size: 0.8rem;
+  }
+  
+  .info-card img {
+    width: 30px;
+  }
+  
   /* 手機版回到頂部按鈕位置微調 */
   .to-top-btn { 
-    bottom: 80px; 
+    bottom: 120px; 
   }
 }
 
 @media (max-width: 480px) {
   .member-banner {
-    height: 100px;
+    height: 160px;
   }
   
   .member-avatar { 
     width: 50px; 
     height: 50px; 
-    top: 70px; 
+    top: 110px; 
     left: var(--spacing-unit); 
     z-index: 10;
   }
   
   .member-name { 
-    top: 70px; 
+    top: 110px; 
     left: 70px; 
     font-size: 0.9rem; 
     z-index: 10;
   }
   
   .member-id { 
-    top: 90px; 
+    top: 130px; 
     left: 70px; 
     font-size: 0.8rem;
     z-index: 10;
   }
   
   .member-meta-top { 
-    top: 70px; 
+    top: 110px; 
     right: var(--spacing-unit); 
     z-index: 10;
+  }
+  
+  .member-header { 
+    margin-bottom: 70px; 
+    overflow: hidden;
   }
   
   .profile-btn {
     padding: calc(var(--spacing-unit) / 3) calc(var(--spacing-unit) / 2);
     font-size: 0.8rem;
+  }
+  
+  .info-card {
+    padding: calc(var(--spacing-unit) / 3);
+    font-size: 0.7rem;
+  }
+  
+  .info-card img {
+    width: 25px;
+  }
+  
+  .tweet { 
+    padding: calc(var(--spacing-unit) / 3); 
+    gap: calc(var(--spacing-unit) / 2);
+  }
+  
+  .tweet-avatar { 
+    width: 35px; 
+    height: 35px; 
+  }
+  
+  .tweet-text {
+    font-size: 0.9rem;
   }
   
   .tweet-header { 
@@ -1088,5 +1157,10 @@ html[data-member-theme="true"] .profile-btn:hover {
   
   .month-grid { 
     grid-template-columns: repeat(3, 1fr); 
+  }
+  
+  /* 更小螢幕回到頂部按鈕位置微調 */
+  .to-top-btn { 
+    bottom: 110px; 
   }
 }
