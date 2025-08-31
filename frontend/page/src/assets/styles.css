@@ -1,4 +1,6 @@
 /* いきづらい部！ 部員日誌 樣式 */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
 
 :root {
   --brand-blue: #1d9bf0;
@@ -97,6 +99,11 @@ a:hover {
 .hashtag { 
   color: var(--text-link) !important; 
   font-weight: 500; 
+}
+
+/* 成員頁面的 hashtag 使用印象色 */
+html[data-member-theme="true"] .hashtag {
+  color: var(--brand-color) !important;
 }
 
 img { 

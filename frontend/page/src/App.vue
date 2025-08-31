@@ -3,7 +3,7 @@
     <!-- 載入動畫 -->
     <div class="loader" :class="{ hide: ui.loaded }">
       <div class="loader-content">
-        <img src="https://www.lovelive-anime.jp/lovehigh/img/emblem.png" alt="Loading..." class="loader-image">
+        <img src="/assets/images/logos/emblem.png" alt="Loading..." class="loader-image">
         <div class="loader-dots">
           <div class="dot"></div>
           <div class="dot"></div>
@@ -60,7 +60,7 @@
 
           <!-- 說明小卡 -->
           <div class="info-card">
-            <img src="https://www.lovelive-anime.jp/lovehigh/img/logo3.svg" alt="Logo">
+            <img src="/assets/images/logos/logo3.svg" alt="Logo">
             <div v-html="t('unofficial_site_notice')"></div>
           </div>
           
@@ -106,7 +106,7 @@
           <nav class="mobile-nav">
             <!-- 手機版：新增主頁按鈕 -->
             <img 
-              :src="projectInfo?.avatar || 'https://pbs.twimg.com/profile_images/1911976807064109056/_-_IbsKQ.jpg'" 
+              :src="projectInfo?.avatar || '/assets/images/avatars/project-avatar.jpg'" 
               :alt="projectInfo?.name_ja || 'いきづらい部'" 
               class="mobile-avatar" 
               :class="{'active': !filters.member && !filters.onlyLiked}" 
@@ -144,7 +144,7 @@
             >
             <img 
               v-else 
-              :src="projectInfo?.avatar || 'https://pbs.twimg.com/profile_images/1911976807064109056/_-_IbsKQ.jpg'" 
+              :src="projectInfo?.avatar || '/assets/images/avatars/project-avatar.jpg'" 
               :alt="projectInfo?.name_ja || 'いきづらい部'" 
               class="member-avatar"
             >
@@ -176,12 +176,12 @@
               @click="openDetail(tweet)"
             >
               <img :src="tweet.avatar_url || authors[tweet.author_id]?.avatar || ''" :alt="tweet.name_ja || authors[tweet.author_id]?.name_ja || tweet.author_id" class="tweet-avatar">
-              <div class="tweet-body">
-                <div class="tweet-header">
-                  <span class="tweet-name">{{ tweet.name_ja || authors[tweet.author_id]?.name_ja || tweet.author_id }}</span>
-                  <span class="tweet-id">{{ tweet.twitter_id || authors[tweet.author_id]?.id || `@${tweet.author_id}` }}</span>
-                  <span class="tweet-time">{{ formatTime(tweet.created_at) }}</span>
-                </div>
+                              <div class="tweet-body">
+                  <div class="tweet-header">
+                    <span class="tweet-name">{{ tweet.name_ja || authors[tweet.author_id]?.name_ja || tweet.author_id }}@いきづらい部！</span>
+                    <span class="tweet-id">{{ tweet.twitter_id || authors[tweet.author_id]?.id || `@${tweet.author_id}` }}</span>
+                    <span class="tweet-time">{{ formatTime(tweet.created_at) }}</span>
+                  </div>
                 <div class="tweet-text" v-html="linkify(tweet.content)" @click="handleTweetTextClick"></div>
                 <div class="tweet-actions">
                   <button 
@@ -278,12 +278,12 @@
       <div class="modal-content">
         <article v-if="ui.detailTweet" class="tweet">
           <img :src="ui.detailTweet.avatar_url" :alt="ui.detailTweet.name_ja" class="tweet-avatar">
-          <div class="tweet-body">
-            <div class="tweet-header">
-              <span class="tweet-name">{{ ui.detailTweet.name_ja }}</span>
-              <span class="tweet-id">{{ ui.detailTweet.twitter_id }}</span>
-              <span class="tweet-time">{{ formatTime(ui.detailTweet.created_at) }}</span>
-            </div>
+                      <div class="tweet-body">
+              <div class="tweet-header">
+                <span class="tweet-name">{{ ui.detailTweet.name_ja }}@いきづらい部！</span>
+                <span class="tweet-id">{{ ui.detailTweet.twitter_id }}</span>
+                <span class="tweet-time">{{ formatTime(ui.detailTweet.created_at) }}</span>
+              </div>
             <div class="tweet-text" v-html="linkify(ui.detailTweet.content)"></div>
           </div>
         </article>
@@ -301,7 +301,7 @@
         <template v-if="ui.profileModalAuthor.key === 'project_home'">
           <div class="profile-desc">{{ ui.profileModalAuthor.profile.description }}</div>
           <div class="satellite-image-container">
-            <img src="https://www.lovelive-anime.jp/lovehigh/img/satellite.png" alt="L高サテライト紹介" />
+            <img src="/assets/images/project/satellite.png" alt="L高サテライト紹介" />
             <span class="satellite-image-caption">L高のサテライト紹介</span>
           </div>
         </template>
@@ -405,14 +405,16 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { getMemberAvatar, getMemberBanner } from './utils/assets.js';
+import { shareTweetAsImage } from './utils/html2canvas-helper.js';
 
 // 專案資訊
 const projectInfo = reactive({ 
   key: 'project_home',
   name_ja: 'いきづらい部', 
   id: '@ikizulive_staff',
-  avatar: 'https://pbs.twimg.com/profile_images/1911976807064109056/_-_IbsKQ.jpg',
-  banner: 'https://pbs.twimg.com/profile_banners/1911282293341356032/1744685770/1500x500',
+  avatar: '/assets/images/avatars/project-avatar.jpg',
+  banner: '/assets/images/banners/project-banner.jpg',
   color: 'var(--brand-blue)',
   profile_btn_text: 'L高とは',
   profile: {
@@ -452,16 +454,16 @@ const translations = {
 
 // 從原始HTML中提取的範例資料作為備用
 const fallbackAuthors = {
-  polka: { key:'polka', name_ja:'高橋ポルカ', id:'@polka_lion', color:'#ccb12e', avatar: 'https://www.lovelive-anime.jp/lovehigh/img/member_1.png', banner: 'https://pbs.twimg.com/profile_banners/1884116039795195904/1747048408/1500x500', profile: { description: 'L高 浅草サテライトの1年生。\n明るく元気な性格で、嬉しくなると足が勝手に踊りだす。\n小さい頃から数学が大の苦手で、高校受験に失敗。\nネット高校であるL高に入学し、スクールアイドルを見つけた。', details: { grade: '1年生', birthday: '8月18日', bloodType: '不明', height: '157cm', hobby: '昼寝', skill: 'どこでも寝れる。街頭インタビューでよく声をかけられる。クジを当てる。', likes: '麺類全般、特にうどん。チョコレート' }}},
-  mai: { key:'mai', name_ja:'麻布麻衣', id:'@My_Mai_Eld', color:'#009fdf', avatar: 'https://www.lovelive-anime.jp/lovehigh/img/member_2.png', banner: 'https://pbs.twimg.com/profile_banners/1906615972401909760/1747048417/1500x500', profile: { description: 'L高 浅草サテライトの1年生。\nプログラムとトロンのPC、論理的思考力を愛し、誰も見たことがない美しいプログラムを作るのが夢。\n合理的な性格で、人とコミュニケーションを取るのが苦手。\n本人は不本意だが、いつもポルカのペースに飲まれがち。', details: { grade: '1年生', birthday: '2月13日', bloodType: 'B型', height: '154cm', hobby: 'プログラミング、データマイニング、マイクラ', skill: 'はんだごて、DIY', likes: '果物、特にメロンとブドウ。ハンバーガー' }}},
-  akira: { key:'akira', name_ja:'五桐玲', id:'@G_Akky304250', color:'#88d66e', avatar: 'https://www.lovelive-anime.jp/lovehigh/img/member_3.png', banner: 'https://pbs.twimg.com/profile_banners/1906615149987012608/1747048422/1500x500', profile: { description: 'L高 浅草サテライトの1年生。\nクライミングでプロのアスリートを目指しており、練習やトレーニングの時間を確保するためL高に入学した。\n誰かと一緒にいる時間より、一人で身体を動かす時間を好む。\n自立しているが意外に抜けているところがある。', details: { grade: '1年生', birthday: '7月9日', bloodType: 'O型', height: '164cm', hobby: 'スポーツ（クライミング、自転車）、筋トレ', skill: '逆立ち、回転、フードアスリートマイスター、ラッピング、ハンドメイド', likes: 'ケールとナッツのサラダ、ドライフルーツ、グラノラバー、牛乳' }}},
-  hanabi: { key:'hanabi', name_ja:'駒形花火', id:'@hanabistarmine',color:'#ff2021', avatar: 'https://www.lovelive-anime.jp/lovehigh/img/member_4.png', banner: 'https://pbs.twimg.com/profile_banners/1906575105783943169/1747048518/1500x500', profile: { description: 'L高 浅草サテライトの1年生。\n浅草にある呉服屋の一人娘。\n将来は跡を継ぎ、事業を拡大させ、着物文化を世界に広めたいという野望を持っている。\n頭の中はいつも着物のことでいっぱい。\n仲見世のアイドルで、しっかり者の商売人気質。', details: { grade: '1年生', birthday: '6月11日', bloodType: 'A型', height: '160cm', hobby: '着物、読書', skill: '着付け、習字、レンジ料理', likes: '抹茶のお菓子、パスタ、もち' }}},
-  miracle: { key:'miracle', name_ja:'金澤奇跡', id:'@MiracleGoldSP', color:'#ffb7f1', avatar: 'https://www.lovelive-anime.jp/lovehigh/img/member_5.png', banner: 'https://pbs.twimg.com/profile_banners/1906578029343916032/1747048423/1500x500', profile: { description: 'L高 福井サテライトの2年生。\nお菓子作りが趣味で、将来の夢はパティシエとして独立開業し世界中にお店を出すこと。\n製菓学校で習うセオリー通りのやり方に疑問を持ち、個人で修行する時間を確保するためL高に入学した。\n言いたいことをはっきりと言うタイプ。', details: { grade: '2年生', birthday: '3月2日', bloodType: 'AB型', height: '152cm', hobby: 'お菓子作り', skill: 'お菓子作り、料理、徹夜', likes: '寿司（特にウニ、いくら）、あんきも、からすみ' }}},
-  noriko: { key:'noriko', name_ja:'調布のりこ', id:'@Noricco_U', color:'#ae62ff', avatar: 'https://www.lovelive-anime.jp/lovehigh/img/member_6.png', banner: 'https://pbs.twimg.com/profile_banners/1906577177275154432/1747048505/1500x500', profile: { description: 'L高 福井サテライトの1年生。\n自分のことをなんの取り柄もない「量産型」だと思っている。\n将来の夢は声優で、中学3年の時に思い切って応募したオーディションでなんとか事務所に所属できたが、まだ仕事はない。', details: { grade: '1年生', birthday: '4月4日', bloodType: 'B型', height: '153cm', hobby: 'アニメ、漫画、ラノベ', skill: '歌（絶対音感）、掃除、バレーボールのセッターが得意。', likes: '甘いもの全般、菓子パンも好き。プリンとシュークリーム、カスタード系。' }}},
-  yukuri: { key:'yukuri', name_ja:'春宮ゆかり', id:'@Yukuri_talk', color:'#5ecbd1', avatar: 'https://www.lovelive-anime.jp/lovehigh/img/member_7.png', banner: 'https://pbs.twimg.com/profile_banners/1906578738156064738/1747048597/1500x500', profile: { description: 'L高 梅田サテライトの1年生。\n穏やかで、品のあるお嬢様。\n幼い頃からバレエを習っており、ミュージカルが大好き。\nかつては自分も歌劇団に入りたいと思っていた。\nポルカのことを助けたいと思っている。', details: { grade: '1年生', birthday: '9月22日', bloodType: 'B型', height: '165cm', hobby: '観劇', skill: 'バレエ', likes: 'そうめん、ゼリー、グラタン、ハム、ハンバーグ、バウムクーヘン、漬物' }}},
-  aurora: { key:'aurora', name_ja:'此花輝夜', id:'@Rollie_twinkle',color:'#fd589e', avatar: 'https://www.lovelive-anime.jp/lovehigh/img/member_8.png', banner: 'https://www.lovelive-anime.jp/lovehigh/img/member_8.png', banner: 'https://pbs.twimg.com/profile_banners/1906583647559524353/1747048657/1500x500', profile: { description: 'L高 梅田サテライトの2年生。\nメイクと美容が大好きで、美容情報をSNSで発信している。\n親の仕事の都合でLAからの帰国子女。「愛は正義」がモットーで、みんなに愛を与えられる優しい心の持ち主。', details: { grade: '2年生', birthday: '1月3日', bloodType: 'O型', height: '162cm', hobby: 'ファッション、美容', skill: 'メイク、コーヒー、縁結び、サッカー', likes: 'コーヒー、ベイクドビーンズ、目玉焼き、カリカリの薄いトースト' }}},
-  midori: { key:'midori', name_ja:'山田真緑', id:'@LittlegreenCom',color:'#16b500', avatar: 'https://www.lovelive-anime.jp/lovehigh/img/member_9.png', banner: 'https://pbs.twimg.com/profile_banners/1906585009492049920/1747048724/1500x500', profile: { description: 'L高 梅田サテライトの1年生。\n環境問題に強い危機感を持っている。\n地球を守るため、環境保護活動をしながら通えるＬ高に入学した。\nHPやSNSを使って環境保護を呼びかけている。\nとても真面目で一生懸命だが、少しずれているところがある。', details: { grade: '1年生', birthday: '5月7日', bloodType: 'A型', height: '155cm', hobby: 'キャンプ', skill: 'パズル、植物標本、虫取り、釣り、星座観察、けん玉', likes: 'スモア、ワッフル、クリームシチュー、いちご' }}},
-  shion: { key:'shion', name_ja:'佐々木翔音', id:'@ShaunTheBunny', color:'#9b9b9b', avatar: 'https://www.lovelive-anime.jp/lovehigh/img/member_10.png', banner: 'https://pbs.twimg.com/profile_banners/1906566008904761345/1747048662/1500x500', profile: { description: 'L高 仙台サテライトの1年生。\n制服コーデが大好きで、自宅で動画配信をしている。\n些細なことで学校に行けない日も多く、部屋に引きこもりがち。\n配信では饒舌だが、人とうまくコミュニケーションが取れない部分も。\nかつて存在したスクールアイドルμ\'sの園田海未のファン。', details: { grade: '1年生', birthday: '11月11日', bloodType: '？', height: '？', hobby: 'SNS配信、読書、パズル、プラモデル', skill: 'バイオリン、ピアノ', likes: '完全食、フライドポテト、ラーメン、辛い物' }}}
+  polka: { key:'polka', name_ja:'高橋ポルカ', id:'@polka_lion', color:'#ccb12e', avatar: getMemberAvatar('polka'), banner: getMemberBanner('polka'), profile: { description: 'L高 浅草サテライトの1年生。\n明るく元気な性格で、嬉しくなると足が勝手に踊りだす。\n小さい頃から数学が大の苦手で、高校受験に失敗。\nネット高校であるL高に入学し、スクールアイドルを見つけた。', details: { grade: '1年生', birthday: '8月18日', bloodType: '不明', height: '157cm', hobby: '昼寝', skill: 'どこでも寝れる。街頭インタビューでよく声をかけられる。クジを当てる。', likes: '麺類全般、特にうどん。チョコレート' }}},
+  mai: { key:'mai', name_ja:'麻布麻衣', id:'@My_Mai_Eld', color:'#009fdf', avatar: getMemberAvatar('mai'), banner: getMemberBanner('mai'), profile: { description: 'L高 浅草サテライトの1年生。\nプログラムとトロンのPC、論理的思考力を愛し、誰も見たことがない美しいプログラムを作るのが夢。\n合理的な性格で、人とコミュニケーションを取るのが苦手。\n本人は不本意だが、いつもポルカのペースに飲まれがち。', details: { grade: '1年生', birthday: '2月13日', bloodType: 'B型', height: '154cm', hobby: 'プログラミング、データマイニング、マイクラ', skill: 'はんだごて、DIY', likes: '果物、特にメロンとブドウ。ハンバーガー' }}},
+  akira: { key:'akira', name_ja:'五桐玲', id:'@G_Akky304250', color:'#88d66e', avatar: getMemberAvatar('akira'), banner: getMemberBanner('akira'), profile: { description: 'L高 浅草サテライトの1年生。\nクライミングでプロのアスリートを目指しており、練習やトレーニングの時間を確保するためL高に入学した。\n誰かと一緒にいる時間より、一人で身体を動かす時間を好む。\n自立しているが意外に抜けているところがある。', details: { grade: '1年生', birthday: '7月9日', bloodType: 'O型', height: '164cm', hobby: 'スポーツ（クライミング、自転車）、筋トレ', skill: '逆立ち、回転、フードアスリートマイスター、ラッピング、ハンドメイド', likes: 'ケールとナッツのサラダ、ドライフルーツ、グラノラバー、牛乳' }}},
+  hanabi: { key:'hanabi', name_ja:'駒形花火', id:'@hanabistarmine',color:'#ff2021', avatar: getMemberAvatar('hanabi'), banner: getMemberBanner('hanabi'), profile: { description: 'L高 浅草サテライトの1年生。\n浅草にある呉服屋の一人娘。\n将来は跡を継ぎ、事業を拡大させ、着物文化を世界に広めたいという野望を持っている。\n頭の中はいつも着物のことでいっぱい。\n仲見世のアイドルで、しっかり者の商売人気質。', details: { grade: '1年生', birthday: '6月11日', bloodType: 'A型', height: '160cm', hobby: '着物、読書', skill: '着付け、習字、レンジ料理', likes: '抹茶のお菓子、パスタ、もち' }}},
+  miracle: { key:'miracle', name_ja:'金澤奇跡', id:'@MiracleGoldSP', color:'#ffb7f1', avatar: getMemberAvatar('miracle'), banner: getMemberBanner('miracle'), profile: { description: 'L高 福井サテライトの2年生。\nお菓子作りが趣味で、将来の夢はパティシエとして独立開業し世界中にお店を出すこと。\n製菓学校で習うセオリー通りのやり方に疑問を持ち、個人で修行する時間を確保するためL高に入学した。\n言いたいことをはっきりと言うタイプ。', details: { grade: '2年生', birthday: '3月2日', bloodType: 'AB型', height: '152cm', hobby: 'お菓子作り', skill: 'お菓子作り、料理、徹夜', likes: '寿司（特にウニ、いくら）、あんきも、からすみ' }}},
+  noriko: { key:'noriko', name_ja:'調布のりこ', id:'@Noricco_U', color:'#ae62ff', avatar: getMemberAvatar('noriko'), banner: getMemberBanner('noriko'), profile: { description: 'L高 福井サテライトの1年生。\n自分のことをなんの取り柄もない「量産型」だと思っている。\n将来の夢は声優で、中学3年の時に思い切って応募したオーディションでなんとか事務所に所属できたが、まだ仕事はない。', details: { grade: '1年生', birthday: '4月4日', bloodType: 'B型', height: '153cm', hobby: 'アニメ、漫画、ラノベ', skill: '歌（絶対音感）、掃除、バレーボールのセッターが得意。', likes: '甘いもの全般、菓子パンも好き。プリンとシュークリーム、カスタード系。' }}},
+  yukuri: { key:'yukuri', name_ja:'春宮ゆかり', id:'@Yukuri_talk', color:'#5ecbd1', avatar: getMemberAvatar('yukuri'), banner: getMemberBanner('yukuri'), profile: { description: 'L高 梅田サテライトの1年生。\n穏やかで、品のあるお嬢様。\n幼い頃からバレエを習っており、ミュージカルが大好き。\nかつては自分も歌劇団に入りたいと思っていた。\nポルカのことを助けたいと思っている。', details: { grade: '1年生', birthday: '9月22日', bloodType: 'B型', height: '165cm', hobby: '観劇', skill: 'バレエ', likes: 'そうめん、ゼリー、グラタン、ハム、ハンバーグ、バウムクーヘン、漬物' }}},
+  aurora: { key:'aurora', name_ja:'此花輝夜', id:'@Rollie_twinkle',color:'#fd589e', avatar: getMemberAvatar('aurora'), banner: getMemberBanner('aurora'), profile: { description: 'L高 梅田サテライトの2年生。\nメイクと美容が大好きで、美容情報をSNSで発信している。\n親の仕事の都合でLAからの帰国子女。「愛は正義」がモットーで、みんなに愛を与えられる優しい心の持ち主。', details: { grade: '2年生', birthday: '1月3日', bloodType: 'O型', height: '162cm', hobby: 'ファッション、美容', skill: 'メイク、コーヒー、縁結び、サッカー', likes: 'コーヒー、ベイクドビーンズ、目玉焼き、カリカリの薄いトースト' }}},
+  midori: { key:'midori', name_ja:'山田真緑', id:'@LittlegreenCom',color:'#16b500', avatar: getMemberAvatar('midori'), banner: getMemberBanner('midori'), profile: { description: 'L高 梅田サテライトの1年生。\n環境問題に強い危機感を持っている。\n地球を守るため、環境保護活動をしながら通えるＬ高に入学した。\nHPやSNSを使って環境保護を呼びかけている。\nとても真面目で一生懸命だが、少しずれているところがある。', details: { grade: '1年生', birthday: '5月7日', bloodType: 'A型', height: '155cm', hobby: 'キャンプ', skill: 'パズル、植物標本、虫取り、釣り、星座観察、けん玉', likes: 'スモア、ワッフル、クリームシチュー、いちご' }}},
+  shion: { key:'shion', name_ja:'佐々木翔音', id:'@ShaunTheBunny', color:'#9b9b9b', avatar: getMemberAvatar('shion'), banner: getMemberBanner('shion'), profile: { description: 'L高 仙台サテライトの1年生。\n制服コーデが大好きで、自宅で動画配信をしている。\n些細なことで学校に行けない日も多く、部屋に引きこもりがち。\n配信では饒舌だが、人とうまくコミュニケーションが取れない部分も。\nかつて存在したスクールアイドルμ\'sの園田海未のファン。', details: { grade: '1年生', birthday: '11月11日', bloodType: '？', height: '？', hobby: 'SNS配信、読書、パズル、プラモデル', skill: 'バイオリン、ピアノ', likes: '完全食、フライドポテト、ラーメン、辛い物' }}}
 };
 
 // 從原始HTML中提取的完整範例推文
@@ -689,62 +691,19 @@ const shareTweet = async (tweet) => {
   ui.isSharing = tweet.id;
   
   try {
-    // 創建截圖容器
-    const captureContainer = document.createElement('div');
-    document.body.appendChild(captureContainer);
-    
-    // 設置截圖容器樣式
-    Object.assign(captureContainer.style, {
-      position: 'absolute',
-      top: '-9999px',
-      left: '0',
-      width: '580px',
-      padding: '16px 20px',
-      background: prefs.dark ? '#16181c' : '#ffffff',
-      fontFamily: 'var(--font-family)',
-      display: 'flex',
-      gap: '12px'
-    });
-    
-    // 獲取作者資訊
     const author = authors[tweet.author_id];
+    const success = await shareTweetAsImage(tweet, author, prefs.dark);
     
-    // 設置截圖內容
-    captureContainer.innerHTML = `
-      <img src="${author?.avatar || ''}" style="width:48px; height:48px; border-radius:50%; flex-shrink:0;">
-      <div style="flex:1; min-width:0;">
-        <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-bottom:4px;">
-          <span style="font-weight:700; color:${prefs.dark ? '#e7e9ea' : '#0f1419'};">${tweetAuthorName(author)}</span>
-          <span style="color:${prefs.dark ? '#8b98a5' : '#536471'}; font-size:0.95rem;">${author?.id || `@${tweet.author_id}`}</span>
-          <span style="color:${prefs.dark ? '#8b98a5' : '#536471'}; font-size:0.95rem;">· ${formatTime(tweet.created_at)}</span>
-        </div>
-        <p style="white-space:pre-wrap; word-break:break-word; font-size:1.05rem; line-height:1.65; margin:0; color:${prefs.dark ? '#e7e9ea' : '#0f1419'};">${tweet.content}</p>
-      </div>
-    `;
-    
-    // 生成截圖
-    const canvas = await html2canvas(captureContainer, { 
-      scale: 2, 
-      useCORS: true 
-    });
-    
-    // 下載圖片
-    const link = document.createElement('a');
-    link.download = `ikidurai-bu-log-${tweet.id}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    
-    showToast(t('image_gen_success'), 'success');
+    if (success) {
+      showToast(t('image_gen_success'), 'success');
+    } else {
+      showToast(t('image_gen_fail'), 'error');
+    }
   } catch (error) {
     console.error('分享功能失敗:', error);
     showToast(t('image_gen_fail'), 'error');
   } finally {
     ui.isSharing = null;
-    // 清理截圖容器
-    const captureContainer = document.querySelector('div[style*="-9999px"]');
-    if (captureContainer) {
-      document.body.removeChild(captureContainer);
-    }
   }
 };
 
@@ -814,7 +773,11 @@ const initData = async () => {
     // 清空現有資料並載入後端資料
     Object.keys(authors).forEach(key => delete authors[key]);
     membersData.forEach(member => {
-      authors[member.id] = member;
+      authors[member.id] = {
+        ...member,
+        avatar: getMemberAvatar(member.id), // 使用本地資源
+        banner: getMemberBanner(member.id)  // 使用本地資源
+      };
     });
     
     // 獲取推文資料
@@ -832,7 +795,7 @@ const initData = async () => {
       name_ja: tw.name_ja,
       twitter_id: tw.twitter_id,
       color: tw.color,
-      avatar_url: tw.avatar_url,
+      avatar_url: getMemberAvatar(tw.author_id), // 使用本地資源
       created_at: tw.created_at, 
       content: tw.content, 
       image_url: tw.image_url || null, 
@@ -866,7 +829,7 @@ const initData = async () => {
       name_ja: authors[tw.author_id]?.name_ja || tw.author_id,
       twitter_id: authors[tw.author_id]?.id || `@${tw.author_id}`,
       color: authors[tw.author_id]?.color || '#1d9bf0',
-      avatar_url: authors[tw.author_id]?.avatar || '',
+      avatar_url: getMemberAvatar(tw.author_id), // 使用本地資源
       created_at: tw.created_at,
       content: tw.content,
       image_url: null,
