@@ -1,20 +1,8 @@
 <template>
   <div id="app">
-    <!-- 載入動畫 -->
-    <div class="loader" :class="{ hide: ui.loaded }">
-      <div class="loader-content">
-        <img src="/assets/images/logos/emblem.png" alt="Loading..." class="loader-image">
-        <div class="loader-dots">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 主應用 -->
-    <div v-if="ui.loaded" class="app-shell">
-  <div class="app-container">
+    <Loader  v-if="!ui.loaded" />
+    <div v-else class="app-shell">
+    <div class="app-container">
         <!-- 左側邊欄 -->
         <aside class="sidebar-left">
           <div class="main-nav">
@@ -407,6 +395,7 @@
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { getMemberAvatar, getMemberBanner } from './utils/assets.js';
 import { shareTweetAsImage } from './utils/html2canvas-helper.js';
+import Loader from './components/ui/Loader.vue';
 
 // 專案資訊
 const projectInfo = reactive({ 
@@ -867,10 +856,10 @@ onMounted(async () => {
     console.error('資料初始化失敗，但繼續載入界面:', error);
     // 即使資料載入失敗，也要顯示界面
   }
+
+  ui.loaded = true;
   
-  // 無論如何都要顯示界面
-  ui.loaded = true; 
-  nextTick(() => {
+    nextTick(() => {
     if (allTweets.length > 0) {
       setupIntersectionObserver();
     }
