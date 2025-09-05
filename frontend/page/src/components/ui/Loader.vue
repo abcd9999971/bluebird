@@ -35,7 +35,6 @@
 
 .loader-image {
   width: 80px;
-  animation: pulse 1.5s infinite ease-in-out;
 }
 
 .loader-dots {
@@ -64,8 +63,4 @@
   40% { transform: scale(1.0); opacity: 1; }
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
 </style>
