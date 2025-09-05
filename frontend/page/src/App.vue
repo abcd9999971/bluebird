@@ -374,13 +374,7 @@
     </div>
 
     <!-- 回到頂部按鈕 -->
-    <button 
-      v-if="ui.showTop" 
-      class="to-top-btn" 
-      @click="scrollToTop"
-    >
-      <span class="icon">keyboard_arrow_up</span>
-    </button>
+    <ToTopButton :show="ui.showTop" />
 
 
 
@@ -396,6 +390,7 @@ import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } 
 import { getMemberAvatar, getMemberBanner } from './utils/assets.js';
 import { shareTweetAsImage } from './utils/html2canvas-helper.js';
 import Loader from './components/ui/Loader.vue';
+import ToTopButton from './components/ui/ToTopButton.vue';
 
 // 專案資訊
 const projectInfo = reactive({ 
@@ -725,7 +720,6 @@ const scrollToDate = (tweetId) => {
 };
 
 const handleScroll = () => { ui.showTop = window.scrollY > 400; };
-const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
 const showToast = (message, type = 'success') => { 
   if (toastTimeout) clearTimeout(toastTimeout); 
