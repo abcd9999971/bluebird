@@ -16,9 +16,27 @@
         <div class="tweet-body">
           <!-- 推文標題行 -->
           <div class="tweet-header">
-            <span class="tweet-name">{{ ui.detailTweet.name_ja }}@いきづらい部！</span>
-            <span class="tweet-id">{{ ui.detailTweet.twitter_id }}</span>
-            <span class="tweet-time">{{ formatTime(ui.detailTweet.created_at) }}</span>
+            <div class="tweet-author-info">
+              <span class="tweet-name">{{ ui.detailTweet.name_ja }}@いきづらい部！</span>
+              <span class="tweet-id" @click="handleIdClick(ui.detailTweet)">{{ ui.detailTweet.twitter_id }}</span>
+            </div>
+            <div class="tweet-time-container">
+              <span 
+                class="tweet-time" 
+                @click.stop="toggleTimeFormat"
+                @mouseenter="showTooltip = true"
+                @mouseleave="showTooltip = false"
+              >
+                {{ displayTime }}
+              </span>
+              <!-- 懸停提示框 -->
+              <div 
+                v-if="showTooltip" 
+                class="time-tooltip"
+              >
+                {{ formatTime(ui.detailTweet.created_at) }}
+              </div>
+            </div>
           </div>
           <!-- 推文內容 -->
           <div class="tweet-text" v-html="linkify(ui.detailTweet.content)"></div>
@@ -29,13 +47,34 @@
 </template>
 
 <script setup>
+import { ref, computed } from 'vue';
+
 // 定義 props - 從父組件接收的資料
 const props = defineProps({
-  ui: Object
+  ui: Object,
+  filters: Object
 });
 
 // 定義 emits - 向父組件發送的事件
-const emit = defineEmits(['closeModal']);
+const emit = defineEmits(['closeModal', 'setMemberFilter']);
+
+// 日期格式狀態
+const showFullTime = ref(false);
+const showTooltip = ref(false);
+
+// 計算顯示的時間格式
+const displayTime = computed(() => {
+  if (showFullTime.value) {
+    return formatTime(props.ui.detailTweet.created_at);
+  } else {
+    // 簡短格式：只顯示月日
+    const date = new Date(props.ui.detailTweet.created_at);
+    return new Intl.DateTimeFormat('ja-JP', { 
+      month: 'long', 
+      day: 'numeric'
+    }).format(date);
+  }
+});
 
 // 翻譯函數 - 獲取多語言文字
 const t = (key) => {
@@ -62,6 +101,19 @@ const formatTime = (s) => new Intl.DateTimeFormat('ja-JP', {
 
 // 事件處理函數 - 關閉彈窗
 const closeModal = () => emit('closeModal');
+
+// 事件處理函數 - 切換時間格式
+const toggleTimeFormat = () => {
+  showFullTime.value = !showFullTime.value;
+};
+
+// 事件處理函數 - 處理 ID 點擊
+const handleIdClick = (tweet) => {
+  // 如果當前不是在該成員的頁面，則啟用該成員的篩選器
+  if (props.filters.member !== tweet.author_id) {
+    emit('setMemberFilter', tweet.author_id);
+  }
+};
 </script>
 
 <style scoped>
@@ -149,9 +201,17 @@ const closeModal = () => emit('closeModal');
 .tweet-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: calc(var(--spacing-unit) * 0.25);
+  gap: calc(var(--spacing-unit) * 1);
+}
+
+.tweet-author-info {
+  display: flex;
+  align-items: center;
   gap: calc(var(--spacing-unit) * 0.5);
-  margin-bottom: calc(var(--spacing-unit) * 0.5);
-  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .tweet-name {
@@ -162,12 +222,75 @@ const closeModal = () => emit('closeModal');
 .tweet-id {
   color: var(--text-secondary);
   font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.tweet-id:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.tweet-time-container {
+  position: relative;
+  display: inline-block;
 }
 
 .tweet-time {
   color: var(--text-secondary);
   font-size: 0.9rem;
-  margin-left: auto;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tweet-time:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+/* 懸停提示框樣式 */
+.time-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  padding: 6px 12px;
+  background-color: var(--bg-tooltip);
+  color: var(--text-tooltip);
+  border: 1px solid var(--border-tooltip);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: var(--shadow-tooltip);
+  backdrop-filter: blur(8px);
+  animation: tooltip-fade-in 0.2s ease-out;
+}
+
+/* 提示框箭頭 */
+.time-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: var(--bg-tooltip);
+}
+
+/* 提示框淡入動畫 */
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .tweet-text {
@@ -212,14 +335,32 @@ const closeModal = () => emit('closeModal');
   }
   
   .tweet-header {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    gap: calc(var(--spacing-unit) * 0.5);
+    flex-wrap: nowrap;
+  }
+  
+  .tweet-author-info {
+    flex-direction: row;
+    align-items: center;
     gap: calc(var(--spacing-unit) * 0.25);
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .tweet-name, .tweet-id {
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  
+  .tweet-id {
+    flex-shrink: 0;
   }
   
   .tweet-time {
-    margin-left: 0;
-    order: -1;
+    font-size: 0.8rem;
+    flex-shrink: 0;
   }
   
   .tweet-text {

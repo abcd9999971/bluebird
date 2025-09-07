@@ -8,7 +8,7 @@
   >
     <!-- 手機版：主頁按鈕 -->
     <img 
-      :src="projectInfo?.avatar || '/assets/images/avatars/project-avatar.jpg'" 
+      :src="projectInfo?.avatar_url || '/assets/images/avatars/project-avatar.jpg'" 
       :alt="projectInfo?.name_ja || 'いきづらい部'" 
       class="mobile-avatar" 
       :class="{'active': !filters.member && !filters.onlyLiked}" 
@@ -27,7 +27,7 @@
     <img 
       v-for="key in characterOrder" 
       :key="'m-'+key" 
-      :src="authors[key]?.avatar || ''" 
+      :src="authors[key]?.avatar_url || ''" 
       :alt="authors[key]?.name_ja || key" 
       class="mobile-avatar" 
       :class="{'active': filters.member===key}" 

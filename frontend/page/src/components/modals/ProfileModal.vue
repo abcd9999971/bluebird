@@ -17,23 +17,37 @@
       
       <!-- 成員自我介紹 -->
       <template v-else>
-        <div class="profile-desc">{{ ui.profileModalAuthor.profile.description }}</div>
-        <dl class="profile-details">
-          <dt>{{ t('profile_grade') }}</dt>
-          <dd>{{ ui.profileModalAuthor.profile.details.grade }}</dd>
-          <dt>{{ t('profile_birthday') }}</dt>
-          <dd>{{ ui.profileModalAuthor.profile.details.birthday }}</dd>
-          <dt>{{ t('profile_bloodType') }}</dt>
-          <dd>{{ ui.profileModalAuthor.profile.details.bloodType }}</dd>
-          <dt>{{ t('profile_height') }}</dt>
-          <dd>{{ ui.profileModalAuthor.profile.details.height }}</dd>
-          <dt>{{ t('profile_hobby') }}</dt>
-          <dd>{{ ui.profileModalAuthor.profile.details.hobby }}</dd>
-          <dt>{{ t('profile_skill') }}</dt>
-          <dd>{{ ui.profileModalAuthor.profile.details.skill }}</dd>
-          <dt>{{ t('profile_likes') }}</dt>
-          <dd>{{ ui.profileModalAuthor.profile.details.likes }}</dd>
-        </dl>
+        <div class="profile-desc">{{ ui.profileModalAuthor.description }}</div>
+        <div class="profile-details">
+          <div class="profile-item">
+            <span class="profile-label">{{ t('profile_grade') }}</span>
+            <span class="profile-content">{{ ui.profileModalAuthor.grade }}</span>
+          </div>
+          <div class="profile-item">
+            <span class="profile-label">{{ t('profile_birthday') }}</span>
+            <span class="profile-content">{{ ui.profileModalAuthor.birthday }}</span>
+          </div>
+          <div class="profile-item">
+            <span class="profile-label">{{ t('profile_bloodType') }}</span>
+            <span class="profile-content">{{ ui.profileModalAuthor.blood_type }}</span>
+          </div>
+          <div class="profile-item">
+            <span class="profile-label">{{ t('profile_height') }}</span>
+            <span class="profile-content">{{ ui.profileModalAuthor.height }}</span>
+          </div>
+          <div class="profile-item">
+            <span class="profile-label">{{ t('profile_hobby') }}</span>
+            <span class="profile-content">{{ ui.profileModalAuthor.hobby }}</span>
+          </div>
+          <div class="profile-item">
+            <span class="profile-label">{{ t('profile_skill') }}</span>
+            <span class="profile-content">{{ ui.profileModalAuthor.skill }}</span>
+          </div>
+          <div class="profile-item">
+            <span class="profile-label">{{ t('profile_likes') }}</span>
+            <span class="profile-content">{{ ui.profileModalAuthor.likes }}</span>
+          </div>
+        </div>
       </template>
     </div>
   </div>
@@ -140,6 +154,12 @@ const closeModal = () => emit('closeModal');
   margin-bottom: calc(var(--spacing-unit) * 1.5);
   white-space: pre-wrap;
   font-size: 1rem;
+  text-align: left;
+  padding: 0;
+  margin-left: 0;
+  margin-right: 0;
+  /* 讓介紹文本與標籤文字對齊 */
+  padding-left: calc(60px + var(--spacing-unit) * 2);
 }
 
 .satellite-image-container {
@@ -167,37 +187,56 @@ const closeModal = () => emit('closeModal');
   box-shadow: var(--shadow-1);
 }
 
+/* 個人資料詳細資訊容器 - 使用 Flexbox 垂直排列各項目 */
 .profile-details {
   margin: 0;
   font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 0.5);
+  width: 100%;
 }
 
-.profile-details dt {
+/* 個人資料項目容器 - 每個項目獨立一行，使用 Flexbox 水平排列標籤和內容 */
+.profile-item {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 2); /* 增加標籤和內容之間的間距 */
+  padding: calc(var(--spacing-unit) * 0.4) calc(var(--spacing-unit) * 0.6);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--brand-color);
+  border-right: 3px solid var(--brand-color);
+  min-height: calc(var(--spacing-unit) * 2.2);
+  box-sizing: border-box;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* 個人資料標籤 - 固定寬度，分散對齊，確保整齊排列 */
+.profile-label {
   font-weight: 600;
   color: var(--text-secondary);
   font-size: 0.85rem;
-  text-align: left;
-  padding: 0;
-  margin: 0 4px 0 0;
   white-space: nowrap;
-  float: left;
-  clear: left;
+  min-width: 60px;
+  max-width: 60px;
+  text-align: justify;
+  text-align-last: justify; /* 確保最後一行也分散對齊 */
+  flex-shrink: 0;
+  display: inline-block;
 }
 
-.profile-details dd {
-  margin: 0 0 calc(var(--spacing-unit) * 0.5) 0;
+/* 個人資料內容 - 填充剩餘空間，左對齊，確保每個項目獨立一行 */
+.profile-content {
   color: var(--text-primary);
   line-height: 1.4;
   font-size: 0.85rem;
-  background-color: var(--bg-tertiary);
-  padding: calc(var(--spacing-unit) * 0.4) calc(var(--spacing-unit) * 0.6);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--brand-color);
-  min-height: calc(var(--spacing-unit) * 2.2);
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-  overflow: hidden;
+  flex: 1;
+  text-align: left;
+  word-break: break-word;
+  display: inline-block;
+  min-width: 0;
 }
 
 /* 手機版樣式 */
@@ -221,15 +260,25 @@ const closeModal = () => emit('closeModal');
   
   .profile-desc {
     font-size: 0.95rem;
+    /* 手機版也讓介紹文本與標籤文字對齊 */
+    padding-left: calc(50px + var(--spacing-unit) * 1.5);
   }
   
-  .profile-details dt {
-    font-size: 0.9rem;
-  }
-  
-  .profile-details dd {
-    font-size: 0.9rem;
+  .profile-item {
     padding: calc(var(--spacing-unit) * 0.4);
+    gap: calc(var(--spacing-unit) * 1.5); /* 手機版也增加間距，但稍微小一點 */
+  }
+  
+  .profile-label {
+    font-size: 0.9rem;
+    min-width: 50px;
+    max-width: 50px;
+    text-align: justify;
+    text-align-last: justify; /* 手機版也使用分散對齊 */
+  }
+  
+  .profile-content {
+    font-size: 0.9rem;
   }
 }
 </style>

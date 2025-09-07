@@ -28,6 +28,7 @@ bluebird-master/
 │       ├── src/
 │       │   ├── App.vue         # 主要應用組件
 │       │   ├── main.js         # 應用入口
+│       │   ├── page.vue        # 主頁面組件
 │       │   ├── components/     # Vue 組件目錄
 │       │   │   ├── layout/     # 佈局組件
 │       │   │   │   ├── LeftSidebar.vue    # 左側邊欄
@@ -47,8 +48,19 @@ bluebird-master/
 │       │   │   │   ├── ToTopButton.vue      # 回到頂部按鈕
 │       │   │   │   ├── ToastNotification.vue # Toast 通知
 │       │   │   │   └── TimelineBar.vue      # 時間軸裝飾組件
+│       │   │   ├── AddPost.vue # 新增推文組件
+│       │   │   └── posts.vue   # 推文頁面組件
+│       │   ├── composables/    # Vue 3 Composition API 組合式函數
+│       │   │   ├── useApi.js   # API 請求管理
+│       │   │   ├── useAppState.js # 應用程式狀態管理
+│       │   │   └── useImageLoader.js # 圖片載入管理
+│       │   ├── views/          # 頁面視圖組件
+│       │   │   ├── PostDetailView.vue # 推文詳情頁面
+│       │   │   └── TimelineView.vue   # 時間軸頁面
 │       │   ├── utils/          # 工具函數
 │       │   │   ├── assets.js   # 資源管理
+│       │   │   ├── constants.js # 常數定義
+│       │   │   ├── formatters.js # 格式化工具
 │       │   │   └── html2canvas-helper.js # 圖片分享
 │       │   ├── member.json     # 成員資料檔案
 │       │   ├── post.json       # 推文資料檔案
@@ -124,10 +136,12 @@ npm run dev
 
 ### 前端技術
 - **Vue.js 3**：使用 Composition API 和響應式系統
+- **Composables 架構**：模組化的狀態管理和 API 請求處理
 - **CSS 變數系統**：統一的設計系統和主題管理
 - **響應式設計**：支援多種螢幕尺寸和設備
 - **圖示系統**：Material Symbols Outlined 圖示字體
 - **字體優化**：Noto Sans JP 字體 CDN 載入
+- **工具函數模組化**：統一的常數管理、格式化工具和資源處理
 
 ### 後端技術
 - **Cloudflare Workers**：邊緣運算平台
@@ -140,6 +154,9 @@ npm run dev
 - **日期導航**：智能日期跳轉系統
 - **個人資料**：完整的成員資料管理
 - **圖片分享**：html2canvas 圖片生成
+- **模組化架構**：Composables 組合式函數，提高程式碼重用性
+- **統一狀態管理**：集中管理應用程式狀態和使用者偏好
+- **常數管理**：統一的常數定義，便於維護和擴展
 
 ## 組件架構
 
@@ -165,6 +182,15 @@ npm run dev
 - **ToastNotification.vue** - Toast 通知，操作結果提示
 - **TimelineBar.vue** - 時間軸裝飾組件，視覺化推文分佈
 
+### Composables 組合式函數
+- **useApi.js** - API 請求管理，統一處理所有後端通訊
+- **useAppState.js** - 應用程式狀態管理，集中管理全域狀態
+- **useImageLoader.js** - 圖片載入管理，優化圖片載入效能
+
+### 頁面視圖組件
+- **PostDetailView.vue** - 推文詳情頁面，獨立頁面顯示推文內容
+- **TimelineView.vue** - 時間軸頁面，專用的時間軸視圖
+
 ## 響應式設計
 
 - **桌面版**：三欄式布局（左側導航、中間時間軸、右側日期導航）
@@ -183,6 +209,12 @@ npm run dev
 - **`member.json`**：存放成員的靜態資料，包含姓名、顏色、個人資料等
 - **`post.json`**：存放推文的備用資料，當後端連接失敗時使用
 - 這些 JSON 檔案會在應用程式啟動時載入，並透過 `utils/assets.js` 中的函數處理動態屬性
+
+### 工具函數模組
+- **`utils/constants.js`**：統一管理應用程式常數，包含成員顏色、API 端點、儲存鍵值等
+- **`utils/formatters.js`**：提供時間、文字、數字等格式化功能
+- **`utils/assets.js`**：處理靜態資源載入和成員資料處理
+- **`utils/html2canvas-helper.js`**：圖片分享功能，將推文轉換為圖片
 
 ### 國際化支援
 - 使用 [vue-i18n](https://vue-i18n.intlify.dev/) 進行文本管理

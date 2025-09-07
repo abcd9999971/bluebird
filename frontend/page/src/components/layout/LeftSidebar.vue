@@ -41,7 +41,7 @@
          :data-member-id="memberId"
          @click="setMemberFilter(memberId)"
        >
-         <img :src="authors[memberId]?.avatar || ''" :alt="authors[memberId]?.name_ja || memberId" class="filter-avatar">
+         <img :src="authors[memberId]?.avatar_url || ''" :alt="authors[memberId]?.name_ja || memberId" class="filter-avatar">
          <span class="nav-text">{{ authors[memberId]?.name_ja || memberId }}</span>
        </button>
       </div>
@@ -154,19 +154,10 @@ onBeforeUnmount(() => {
   });
 });
 
-// 翻譯函數 - 獲取多語言文字
-const t = (key) => {
-  const translations = {
-    'ja': { 
-      home_button_text: 'ホーム', 
-      filter_liked: 'いいねした日誌', 
-      dark_mode_label: 'テーマ切り替え', 
-      search_placeholder: '日誌を検索',
-      unofficial_site_notice: 'いきづらい部！<br>の非公式メンバー日誌サイト'
-    }
-  };
-  return translations['ja']?.[key] || key;
-};
+// 使用統一的國際化系統
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 // 事件處理函數 - 重置所有篩選條件
 const resetFilters = () => emit('resetFilters');

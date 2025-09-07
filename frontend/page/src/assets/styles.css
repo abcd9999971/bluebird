@@ -33,6 +33,12 @@
   --border-outline: #536471;
   --border-outline-variant: #eff3f4;
   
+  /* 提示框色彩 */
+  --bg-tooltip: rgba(255, 255, 255, 0.95);
+  --text-tooltip: #0f1419;
+  --border-tooltip: rgba(15, 20, 25, 0.1);
+  --shadow-tooltip: 0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  
   /* 字體設定 */
   --font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-size-base: 16px;
@@ -112,6 +118,12 @@ html[data-theme='dark'] {
   --border-secondary: #536471;
   --border-outline: #536471;
   --border-outline-variant: #2f3336;
+  
+  /* 深色主題提示框色彩 */
+  --bg-tooltip: rgba(15, 20, 25, 0.95);
+  --text-tooltip: #e7e9ea;
+  --border-tooltip: rgba(231, 233, 234, 0.1);
+  --shadow-tooltip: 0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
   
   --bg-stripe-base-color: var(--brand-blue);
 }
@@ -373,79 +385,7 @@ button {
   font-weight: 700; 
 }
 
-.tweet { 
-  display: flex; 
-  gap: calc(var(--spacing-unit) * 1.5); 
-  padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2); 
-  border-bottom: 1px solid var(--border-primary); 
-  background-color: transparent; 
-  transition: var(--transition-fast); 
-  scroll-margin-top: 60px; 
-}
-
-.tweet:hover { 
-  background-color: var(--bg-hover); 
-  cursor: pointer; 
-  transform: translateY(-2px); 
-  box-shadow: var(--shadow-md); 
-}
-
-.tweet-avatar { 
-  width: 48px; 
-  height: 48px; 
-  border-radius: 50%; 
-  object-fit: cover; 
-  flex-shrink: 0; 
-  transition: var(--transition-fast); 
-}
-
-.tweet-avatar:hover { 
-  transform: scale(1.08) rotate(2deg); 
-}
-
-.tweet-body { 
-  flex: 1; 
-  min-width: 0; 
-}
-
-.tweet-header { 
-  display: flex; 
-  align-items: center; 
-  gap: calc(var(--spacing-unit) / 2); 
-  flex-wrap: wrap; 
-  margin-bottom: calc(var(--spacing-unit) / 2); 
-}
-
-.tweet-name { 
-  font-weight: 700; 
-}
-
-.tweet-id, .tweet-time { 
-  color: var(--text-secondary); 
-  font-size: 0.95rem; 
-}
-
-.tweet-text { 
-  white-space: pre-wrap; 
-  word-break: break-word; 
-  font-size: 1.05rem; 
-}
-
-.tweet-image { 
-  width: 100%; 
-  max-height: 500px; 
-  object-fit: cover; 
-  border-radius: var(--radius-lg); 
-  margin-top: var(--spacing-unit); 
-  border: 1px solid var(--border-primary); 
-}
-
-.tweet-actions { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  margin-top: var(--spacing-unit); 
-}
+/* Tweet 樣式已移至 PostItem 組件中管理，避免樣式衝突 */
 
 .action-btn { 
   display: flex; 
@@ -527,21 +467,37 @@ button {
   gap: var(--spacing-unit); 
 }
 
+/* 成員名稱和 ID 容器 - 使用 Flexbox 水平排列 */
+.member-name-container {
+  position: absolute;
+  top: 240px;
+  left: 170px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 0.5);
+}
+
+/* 成員名稱 - 主要標題樣式 */
 .member-name { 
   font-size: 1.35rem; 
   font-weight: 700; 
-  position: absolute; 
-  top: 240px; 
-  left: 170px; 
-  z-index: 10;
+  color: var(--text-primary);
 }
 
-.member-id { 
+/* 成員 ID 連結 - 可點擊的 Twitter/X 連結 */
+.member-id-link { 
   color: var(--text-secondary); 
-  position: absolute; 
-  top: 270px; 
-  left: 170px; 
-  z-index: 10;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 400;
+  transition: color var(--transition-duration) ease;
+}
+
+/* 成員 ID 連結懸停效果 */
+.member-id-link:hover {
+  color: var(--brand-color);
+  text-decoration: underline;
 }
 
 .profile-btn { 
@@ -834,21 +790,7 @@ html[data-member-theme="true"] .profile-btn:hover {
   white-space: pre-wrap; 
 }
 
-.profile-modal .profile-details { 
-  display: grid; 
-  grid-template-columns: 120px 1fr; 
-  gap: var(--spacing-unit) calc(var(--spacing-unit) * 2); 
-  padding: 1.5rem; 
-}
-
-.profile-modal dt { 
-  font-weight: 700; 
-  color: var(--text-secondary); 
-}
-
-.profile-modal dd { 
-  margin: 0; 
-}
+/* ProfileModal 樣式已移至組件中管理，避免樣式衝突 */
 
 /* L高 介紹圖文樣式 */
 .satellite-image-container { 
@@ -1035,13 +977,19 @@ html[data-member-theme="true"] .profile-btn:hover {
     top: 150px;
   }
   
-  .member-name {
+  .member-name-container {
     top: 200px;
+    left: 120px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: calc(var(--spacing-unit) * 0.25);
+  }
+  
+  .member-name {
     font-size: 1.2rem;
   }
   
-  .member-id {
-    top: 225px;
+  .member-id-link {
     font-size: 1rem;
   }
   
@@ -1164,20 +1112,27 @@ html[data-member-theme="true"] .profile-btn:hover {
     gap: 8px !important; 
   }
   
+  /* 成員名稱和 ID 容器 - 手機版使用水平排列 */
+  .member-name-container {
+    position: absolute !important;
+    top: calc(clamp(60px, 25vw, 230px) + 10px) !important; /* 橫幅下方10px */
+    left: 108px !important; /* 配合更大的頭貼調整位置 */
+    display: flex !important;
+    align-items: center !important;
+    gap: calc(var(--spacing-unit) * 0.5) !important;
+    flex-direction: row !important; /* 手機版也使用水平排列 */
+  }
+  
   .member-name { 
     font-size: 0.9rem !important; 
     font-weight: 700 !important; 
-    position: absolute !important; 
-    top: calc(clamp(60px, 25vw, 230px) + 10px) !important; /* 橫幅下方10px */
-    left: 108px !important; /* 配合更大的頭貼調整位置 */
+    color: var(--text-primary) !important;
   }
   
-  .member-id { 
+  .member-id-link { 
     color: var(--text-secondary) !important; 
-    position: absolute !important; 
-    top: calc(clamp(60px, 25vw, 230px) + 25px) !important; /* 名稱下方15px */
-    left: 108px !important; /* 配合更大的頭貼調整位置 */
     font-size: 0.8rem !important;
+    text-decoration: none !important;
   }
   
   .profile-btn {
@@ -1196,19 +1151,7 @@ html[data-member-theme="true"] .profile-btn:hover {
     transform: scale(1.05);
   }
   
-  .tweet { 
-    padding: calc(var(--spacing-unit) / 2); 
-    gap: var(--spacing-unit);
-  }
-  
-  .tweet-avatar { 
-    width: 40px; 
-    height: 40px; 
-  }
-  
-  .tweet-text {
-    font-size: 0.95rem;
-  }
+  /* Tweet 樣式已移至 PostItem 組件中管理，避免樣式衝突 */
   
   .modal { 
     width: 95vw !important; 

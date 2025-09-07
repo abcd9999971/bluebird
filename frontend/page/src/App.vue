@@ -126,10 +126,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { getMemberAvatar, getMemberBanner, processMemberData } from './utils/assets.js';
+import { useAppState } from './composables/useAppState.js';
+import { useApi } from './composables/useApi.js';
+import { useImageLoader } from './composables/useImageLoader.js';
 import { shareTweetAsImage } from './utils/html2canvas-helper.js';
+import { formatTime, linkify } from './utils/formatters.js';
+import { processMemberData } from './utils/assets.js';
 import fallbackTweetsData from './post.json';
 import fallbackMembersData from './member.json';
 
@@ -154,69 +158,43 @@ import ProfileModal from './components/modals/ProfileModal.vue';
 import DateNavModal from './components/modals/DateNavModal.vue';
 import TimelineBar from './components/ui/TimelineBar.vue';
 
-// 專案資訊 - L高的基本資料
-const projectInfo = reactive({ 
-  key: 'project_home',
-  name_ja: 'いきづらい部', 
-  id: '@ikizulive_staff',
-  avatar: '/assets/images/avatars/project-avatar.jpg',
-  banner: '/assets/images/banners/project-banner.jpg',
-  color: 'var(--brand-blue)',
-  profile_btn_text: 'L高とは',
-  profile: {
-    description: 'Love学院高等学校。略してL高。\n全国にサテライト校を持つインターネット高校。\n生徒たちは自由にカリキュラムを組み、オンラインで学習できる。\nひとりひとりのライフスタイルに合わせて単位取得が可能。'
-  }
-});
+// === 使用 Composable 管理狀態 ===
+const {
+  // 狀態
+  prefs,
+  allTweets,
+  authors,
+  filters,
+  ui,
+  scroller,
+  toast,
+  
+  // 計算屬性
+  tweetsBeforeMonthFilter,
+  availableYears,
+  availableMonths,
+  filteredTweets,
+  dateGroups,
+  brandColor,
+  headerTitle,
+  
+  // 方法
+  initializeState,
+  loadMembers,
+  loadTweets,
+  persistLikes,
+  applyTheme,
+  
+  // 常數
+  CHARACTER_ORDER: characterOrder,
+  PROJECT_INFO: projectInfo
+} = useAppState();
 
-// 國際化文本管理已移至 src/locales/ja.json
+// === 使用 API 管理 ===
+const { fetchMembers, fetchTweets, toggleLike: apiToggleLike, withRetry } = useApi();
 
-// 備用成員資料 - 當後端連接失敗時使用
-const fallbackAuthors = processMemberData(fallbackMembersData);
-
-// 備用推文資料 - 從 post.json 載入
-const fallbackTweets = fallbackTweetsData;
-
-// === 反應式資料狀態管理 ===
-
-// 成員資料 - 存放所有成員的詳細資訊
-const authors = reactive({...fallbackAuthors});
-// 成員顯示順序 - 控制左側邊欄和手機版導航的排列
-const characterOrder = ['polka','mai','akira','hanabi','miracle','noriko','yukuri','aurora','midori','shion'];
-
-// 使用者偏好設定
-const prefs = reactive({ dark: false }); // 深色模式切換
-
-// 推文資料 - 存放從後端獲取的所有推文
-const allTweets = reactive([]);
-
-// 篩選條件 - 控制推文的顯示篩選
-const filters = reactive({ 
-  member: null,      // 選擇的成員ID
-  onlyLiked: false,  // 是否只顯示喜歡的推文
-  search: '',        // 搜尋關鍵字
-  year: null,        // 選擇的年份
-  month: null        // 選擇的月份
-});
-
-// UI 狀態管理 - 控制各種界面元素的顯示狀態
-const ui = reactive({ 
-  loaded: false,           // 資料是否載入完成
-  overlay: false,          // 彈窗遮罩層是否顯示
-  detail: false,           // 推文詳情彈窗是否顯示
-  detailTweet: null,       // 當前查看的推文詳情
-  showTop: false,          // 回到頂部按鈕是否顯示
-  showSearchInput: false,  // 桌面版搜尋框是否顯示
-  showMobileSearch: false, // 手機版搜尋框是否顯示
-  isSharing: null,         // 正在分享的推文ID
-  dateNavModal: false,     // 手機版日期導航彈窗是否顯示
-  profileModalAuthor: null // 個人資料彈窗顯示的成員資料
-});
-
-// 滾動相關狀態 - 用於日期導航器的當前活動日期
-const scroller = reactive({ activeDate: null });
-
-// Toast 通知狀態 - 顯示操作結果訊息
-const toast = reactive({ show: false, message: '', type: 'success' });
+// === 使用圖片載入管理 ===
+const { preloadMemberImages } = useImageLoader();
 
 // === DOM 元素引用 ===
 const searchInput = ref(null);       // 桌面版搜尋輸入框引用
@@ -231,79 +209,11 @@ let toastTimeout = null;         // Toast 自動隱藏計時器
 
 // === 工具函數 ===
 
-// === 計算屬性 ===
-// 月份篩選前的推文資料 - 應用年份、成員、搜尋、喜歡等篩選條件
-const tweetsBeforeMonthFilter = computed(() => {
-  let result = [...allTweets];
-  if (filters.year) result = result.filter(t => new Date(t.created_at).getFullYear() === filters.year);
-  if (filters.onlyLiked) result = result.filter(t => t.liked);
-  if (filters.member) result = result.filter(t => t.author_id === filters.member);
-  if (filters.search) { 
-    const query = filters.search.toLowerCase(); 
-    result = result.filter(t => 
-      t.content.toLowerCase().includes(query) || 
-      (t.name_ja || authors[t.author_id]?.name_ja || '').toLowerCase().includes(query) || 
-      (t.twitter_id || authors[t.author_id]?.id || '').toLowerCase().includes(query)
-    ); 
-  }
-  return result;
-});
-
-// 可用年份清單 - 從所有推文中提取年份並排序（新到舊）
-const availableYears = computed(() => [...new Set(allTweets.map(t => new Date(t.created_at).getFullYear()))].sort((a, b) => b - a));
-
-// 可用月份清單 - 根據當前篩選條件計算該年份下有推文的月份
-const availableMonths = computed(() => {
-  if (!filters.year) return [];
-  let filteredTweets = [...allTweets];
-  if (filters.year) filteredTweets = filteredTweets.filter(t => new Date(t.created_at).getFullYear() === filters.year);
-  if (filters.onlyLiked) filteredTweets = filteredTweets.filter(t => t.liked);
-  if (filters.member) filteredTweets = filteredTweets.filter(t => t.author_id === filters.member);
-  if (filters.search) { 
-    const query = filters.search.toLowerCase(); 
-    filteredTweets = filteredTweets.filter(t => 
-      t.content.toLowerCase().includes(query) || 
-      (t.name_ja || authors[t.author_id]?.name_ja || '').toLowerCase().includes(query) || 
-      (t.twitter_id || authors[t.author_id]?.id || '').toLowerCase().includes(query)
-    ); 
-  }
-  return [...new Set(filteredTweets.map(t => new Date(t.created_at).getMonth() + 1))];
-});
-
-// 最終篩選後的推文列表 - 應用所有篩選條件包括月份
-const filteredTweets = computed(() => {
-  if (!filters.month) return tweetsBeforeMonthFilter.value;
-  return tweetsBeforeMonthFilter.value.filter(t => new Date(t.created_at).getMonth() + 1 === filters.month);
-});
-
-// 日期分組資料 - 將推文按日期分組並統計數量，用於右側日期導航器
-const dateGroups = computed(() => {
-  if (filteredTweets.value.length === 0) return [];
-  const groups = filteredTweets.value.reduce((acc, tweet) => { 
-    const date = tweet.created_at.substring(0, 10); 
-    if (!acc[date]) { 
-      acc[date] = { date, count: 0, firstTweetId: tweet.id }; 
-    } 
-    acc[date].count++; 
-    return acc; 
-  }, {});
-  return Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date));
-});
-
-// 當前品牌顏色 - 根據選擇的成員或專案顏色
-const brandColor = computed(() => (filters.member && authors[filters.member]) ? authors[filters.member].color : (projectInfo?.color || '#1d9bf0'));
-
-// 標題文字 - 根據當前篩選狀態顯示對應標題
-const headerTitle = computed(() => { 
-  if (filters.member) return authors[filters.member]?.name_ja || filters.member; 
-  if (filters.onlyLiked) return t('filter_liked'); 
-  return projectInfo?.name_ja || 'いきづらい部'; 
-});
-
+// === 計算屬性（已移至 useAppState） ===
 // 當前橫幅樣式 - 根據選擇的成員或專案設定背景
 const currentBannerStyle = computed(() => {
   const current = filters.member ? authors[filters.member] : projectInfo;
-  return current?.banner ? { backgroundImage: `url(${current.banner})` } : { backgroundColor: current?.color || '#1d9bf0' };
+  return current?.banner_url ? { backgroundImage: `url(${current.banner_url})` } : { backgroundColor: current?.color || '#1d9bf0' };
 });
 
 // === 事件處理方法 ===
@@ -315,31 +225,11 @@ const displayName = (author) => author?.name_ja || author?.id || '';
 const tweetAuthorName = (author) => `${displayName(author)}@いきづらい部！`;
 
 // 頭像取得工具函數 - 取得作者頭像URL
-const avatarOf = (author) => author?.avatar_url || author?.avatar || '';
+const avatarOf = (author) => author?.avatar_url || '';
 
-// 文字連結化處理 - 將hashtag轉換為可點擊連結
-const linkify = (text) => (text || '').replace(/#([\w\u3000-\u9fff\u3040-\u30ff\uff00-\uffef!-]+)/g, '<a href="#" class="hashtag">#$1</a>');
+// 工具函數（已移至 formatters.js）
 
-// 時間格式化 - 將時間戳轉換為日文格式的易讀時間
-const formatTime = (s) => new Intl.DateTimeFormat('ja-JP', { 
-  year: 'numeric', 
-  month: 'long', 
-  day: 'numeric', 
-  hour: '2-digit', 
-  minute: '2-digit', 
-  hour12: false 
-}).format(new Date(s));
-
-// 日期滾動器格式化 - 為右側日期導航器格式化日期顯示
-const formatDateForScroller = (dateString) => new Intl.DateTimeFormat('ja-JP', { 
-  month: 'long', 
-  day: 'numeric' 
-}).format(new Date(dateString));
-
-// 保存喜歡狀態到本地儲存 - 將用戶的喜歡記錄保存到localStorage
-const persistLikes = () => { 
-  localStorage.setItem('bb_likes', JSON.stringify(allTweets.filter(t => t.liked).map(t => t.id))); 
-};
+// 保存喜歡狀態到本地儲存 - 將用戶的喜歡記錄保存到localStorage（已移至 useAppState）
 
 // 切換推文喜歡狀態 - 處理推文點讚/取消點讚功能
 const toggleLike = async (tweet) => { 
@@ -349,14 +239,10 @@ const toggleLike = async (tweet) => {
   // 嘗試同步到後端
   try {
     const userIp = '127.0.0.1'; // 簡化處理，實際應該獲取真實IP
-    await fetch('http://localhost:8787/api/likes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tweetId: tweet.id,
-        userIp,
-        action: tweet.liked ? 'like' : 'unlike'
-      })
+    await apiToggleLike({
+      tweetId: tweet.id,
+      userIp,
+      action: tweet.liked ? 'like' : 'unlike'
     });
   } catch (error) {
     console.warn('後端同步失敗，僅使用本地儲存:', error);
@@ -522,66 +408,37 @@ const showToast = (message, type = 'success') => {
   toastTimeout = setTimeout(() => { toast.show = false; }, 3000); 
 };
 
-const applyTheme = () => { 
-  document.documentElement.dataset.theme = prefs.dark ? 'dark' : 'light'; 
-  localStorage.setItem('bb_theme', prefs.dark ? 'dark' : 'light'); 
-};
+// 應用主題（已移至 useAppState）
 
-const toggleTheme = () => { prefs.dark = !prefs.dark; };
+const toggleTheme = () => { 
+  prefs.dark = !prefs.dark; 
+  applyTheme(); 
+};
 
 // 初始化資料
 const initData = async () => {
-  prefs.dark = (localStorage.getItem('bb_theme') === 'dark');
-  
   console.log('開始初始化資料...');
+  
+  // 初始化狀態
+  initializeState();
   
   // 嘗試從後端獲取資料
   try {
     // 獲取成員資料
     console.log('正在獲取成員資料...');
-    const membersResponse = await fetch('http://localhost:8787/api/members');
-    if (!membersResponse.ok) {
-      throw new Error(`成員資料請求失敗: ${membersResponse.status} ${membersResponse.statusText}`);
-    }
-    const membersData = await membersResponse.json();
+    const membersData = await withRetry(() => fetchMembers());
     console.log('成員資料:', membersData);
     
-    // 清空現有資料並載入後端資料
-    Object.keys(authors).forEach(key => delete authors[key]);
-    membersData.forEach(member => {
-      authors[member.id] = {
-        ...member,
-        avatar: getMemberAvatar(member.id), // 使用本地資源
-        banner: getMemberBanner(member.id)  // 使用本地資源
-      };
-    });
+    // 載入成員資料
+    loadMembers(membersData);
     
     // 獲取推文資料
     console.log('正在獲取推文資料...');
-    const tweetsResponse = await fetch('http://localhost:8787/api/tweets');
-    if (!tweetsResponse.ok) {
-      throw new Error(`推文資料請求失敗: ${tweetsResponse.status} ${tweetsResponse.statusText}`);
-    }
-    const tweetsData = await tweetsResponse.json();
+    const tweetsData = await withRetry(() => fetchTweets());
     console.log('推文資料:', tweetsData);
     
-    const processedTweets = tweetsData.map(tw => ({ 
-      id: tw.id, 
-      author_id: tw.author_id, 
-      name_ja: tw.name_ja,
-      twitter_id: tw.twitter_id,
-      color: tw.color,
-      avatar_url: getMemberAvatar(tw.author_id), // 使用本地資源
-      created_at: tw.created_at, 
-      content: tw.content, 
-      image_url: tw.image_url || null, 
-      liked: false, 
-      _pop: false 
-    })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    
-    // 清空現有推文並載入後端資料
-    allTweets.length = 0;
-    allTweets.push(...processedTweets);
+    // 載入推文資料
+    loadTweets(tweetsData);
     
     console.log('後端資料載入成功！');
     console.log('成員數量:', Object.keys(authors).length);
@@ -591,43 +448,29 @@ const initData = async () => {
     console.warn('後端連接失敗，使用備用資料:', backendError);
     showToast('後端連接失敗，使用範例資料', 'warning');
     
-    // 確保備用成員資料已載入
-    if (Object.keys(authors).length === 0) {
-      Object.assign(authors, fallbackAuthors);
-      console.log('載入備用成員資料');
-    }
+    // 載入備用成員資料
+    const fallbackAuthors = processMemberData(fallbackMembersData);
+    Object.assign(authors, fallbackAuthors);
     
-    // 使用備用推文資料
-    allTweets.length = 0;
-    const processedFallbackTweets = fallbackTweets.map(tw => ({
-      id: tw.id,
-      author_id: tw.author_id,
-      name_ja: authors[tw.author_id]?.name_ja || tw.author_id,
-      twitter_id: authors[tw.author_id]?.id || `@${tw.author_id}`,
-      color: authors[tw.author_id]?.color || '#1d9bf0',
-      avatar_url: getMemberAvatar(tw.author_id), // 使用本地資源
-      created_at: tw.created_at,
-      content: tw.content,
-      image_url: null,
-      liked: false,
-      _pop: false
-    }));
+          // 載入備用推文資料
+          const processedFallbackTweets = fallbackTweetsData.map(tw => ({
+            id: tw.id,
+            author_id: tw.author_id,
+            name_ja: authors[tw.author_id]?.name_ja || tw.author_id,
+            twitter_id: authors[tw.author_id]?.twitter_id || `@${tw.author_id}`,
+            color: authors[tw.author_id]?.color || '#1d9bf0',
+            avatar_url: authors[tw.author_id]?.avatar_url || '',
+            created_at: tw.created_at,
+            content: tw.content,
+            image_url: null,
+            liked: false,
+            _pop: false
+          }));
     
-    allTweets.push(...processedFallbackTweets);
+    loadTweets(processedFallbackTweets);
     console.log('備用資料載入完成！');
     console.log('推文數量:', allTweets.length);
   }
-  
-  // 讀取本地喜歡狀態
-  try { 
-    const savedLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]'); 
-    const likeMap = new Set(savedLikes); 
-    allTweets.forEach(tw => tw.liked = likeMap.has(tw.id)); 
-  } catch (e) { 
-    console.error("讀取 LocalStorage 中的 like 失敗", e); 
-  }
-  
-  if (availableYears.value.length > 0) { filters.year = availableYears.value[0]; }
   
   console.log('資料初始化完成！');
 };

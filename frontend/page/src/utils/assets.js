@@ -128,9 +128,20 @@ export function processMemberData(memberData) {
   
   for (const [memberId, memberInfo] of Object.entries(memberData)) {
     processedMembers[memberId] = {
-      ...memberInfo,
-      avatar: getMemberAvatar(memberId),
-      banner: getMemberBanner(memberId)
+      id: memberId,
+      name_ja: memberInfo.name_ja,
+      twitter_id: memberInfo.id,
+      color: memberInfo.color,
+      avatar_url: getMemberAvatar(memberId),
+      banner_url: getMemberBanner(memberId),
+      grade: memberInfo.profile?.details?.grade,
+      birthday: memberInfo.profile?.details?.birthday,
+      blood_type: memberInfo.profile?.details?.bloodType,
+      height: memberInfo.profile?.details?.height,
+      hobby: memberInfo.profile?.details?.hobby,
+      skill: memberInfo.profile?.details?.skill,
+      likes: memberInfo.profile?.details?.likes,
+      description: memberInfo.profile?.description
     };
   }
   
