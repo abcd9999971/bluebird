@@ -150,7 +150,7 @@ import PostList from './components/posts/PostList.vue';
 import PostDetailModal from './components/modals/PostDetailModal.vue';
 import ProfileModal from './components/modals/ProfileModal.vue';
 import DateNavModal from './components/modals/DateNavModal.vue';
-import TimelineBar from './components/TimelineBar.vue';
+import TimelineBar from './components/ui/TimelineBar.vue';
 
 // 專案資訊 - L高的基本資料
 const projectInfo = reactive({ 
@@ -759,7 +759,4 @@ watch(() => prefs.dark, applyTheme);
 }
 
 /* 其他樣式會在CSS檔案中定義 */
-.timeline-bar {
-  /* TimelineBar 元件會自行處理響應式顯示 */
-}
 </style>

@@ -45,8 +45,8 @@ bluebird-master/
 │       │   │   ├── ui/         # UI 通用組件
 │       │   │   │   ├── Loader.vue           # 載入器
 │       │   │   │   ├── ToTopButton.vue      # 回到頂部按鈕
-│       │   │   │   └── ToastNotification.vue # Toast 通知
-│       │   │   └── TimelineBar.vue          # 時間軸裝飾組件
+│       │   │   │   ├── ToastNotification.vue # Toast 通知
+│       │   │   │   └── TimelineBar.vue      # 時間軸裝飾組件
 │       │   ├── utils/          # 工具函數
 │       │   │   ├── assets.js   # 資源管理
 │       │   │   └── html2canvas-helper.js # 圖片分享
