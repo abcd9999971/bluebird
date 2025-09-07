@@ -90,7 +90,7 @@ const closeModal = () => emit('closeModal');
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: var(--bg-primary);
+  background-color: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--border-radius);
   max-width: 500px;
@@ -101,6 +101,7 @@ const closeModal = () => emit('closeModal');
   opacity: 0;
   transition: opacity var(--transition-duration) ease;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
 }
 
 .modal.show {
@@ -113,7 +114,7 @@ const closeModal = () => emit('closeModal');
   align-items: center;
   padding: var(--spacing-unit);
   border-bottom: 1px solid var(--border-primary);
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-tertiary);
 }
 
 .modal-header h3 {

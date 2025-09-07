@@ -112,7 +112,10 @@ const scrollToDate = (tweetId) => emit('scrollToDate', tweetId);
 .date-navigator {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: var(--border-radius);
+  border-radius: var(--radius-lg);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -131,6 +134,10 @@ const scrollToDate = (tweetId) => emit('scrollToDate', tweetId);
 
 .date-navigator-controls {
   padding: var(--spacing-unit);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .year-scroller {
@@ -180,10 +187,17 @@ const scrollToDate = (tweetId) => emit('scrollToDate', tweetId);
 }
 
 .date-list {
-  max-height: 300px;
+  flex: 1;
   overflow-y: auto;
   border: 1px solid var(--border-primary);
-  border-radius: calc(var(--border-radius) / 2);
+  border-radius: var(--radius-md);
+  min-height: 0;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.date-list::-webkit-scrollbar {
+  display: none;
 }
 
 .date-list-item {

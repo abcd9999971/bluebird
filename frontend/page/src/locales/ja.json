@@ -23,5 +23,6 @@
   "profile_hobby": "趣味",
   "profile_skill": "特技",
   "profile_likes": "好物",
-  "x_account_tooltip": "公式Xアカウントへ"
+  "x_account_tooltip": "公式Xアカウントへ",
+  "member_filter_tooltip": "このメンバーの日誌を表示"
 }

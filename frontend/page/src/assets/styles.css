@@ -216,9 +216,55 @@ button {
   to { transform: rotate(360deg); } 
 }
 
-@keyframes breath { 
-  0%, 100% { transform: scale(1); } 
-  50% { transform: scale(0.92); } 
+@keyframes breath {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.92); }
+}
+
+/* 推文載入動畫 */
+@keyframes tweet-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 成員切換動畫 */
+@keyframes member-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 按鈕按下動畫 */
+@keyframes button-press {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0.95);
+  }
+}
+
+/* 滾動指示器動畫 */
+@keyframes scroll-indicator-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
 }
 
 .app-shell { 
@@ -1216,6 +1262,114 @@ html[data-member-theme="true"] .profile-btn:hover {
   .profile-btn {
     padding: calc(var(--spacing-unit) / 2) calc(var(--spacing-unit) * 0.8);
     font-size: 0.9rem;
+  }
+}
+
+/* 橫屏模式適配 */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* 調整手機版橫屏布局 */
+  .member-header {
+    margin-bottom: 60px;
+  }
+  
+  .member-banner {
+    height: clamp(50px, 15vw, 120px) !important;
+  }
+  
+  .member-avatar {
+    width: 60px !important;
+    height: 60px !important;
+    top: calc(clamp(50px, 15vw, 120px) - 30px) !important;
+    left: 12px !important;
+  }
+  
+  .member-name-container {
+    top: calc(clamp(50px, 15vw, 120px) + 8px) !important;
+    left: 80px !important;
+  }
+  
+  .member-name {
+    font-size: 0.8rem !important;
+  }
+  
+  .member-id-link {
+    font-size: 0.7rem !important;
+  }
+  
+  .member-meta-top {
+    top: calc(clamp(50px, 15vw, 120px) + 8px) !important;
+    right: 12px !important;
+  }
+  
+  .profile-btn {
+    padding: 2px 6px !important;
+    font-size: 0.6rem !important;
+  }
+  
+  /* 調整底部導航欄在橫屏模式下的位置 */
+  .bottom-navigation {
+    padding: calc(var(--spacing-unit) * 0.25) 0;
+  }
+  
+  .nav-item {
+    padding: calc(var(--spacing-unit) * 0.25);
+    min-width: 50px;
+  }
+  
+  .nav-icon {
+    font-size: 18px;
+  }
+  
+  .nav-label {
+    font-size: 0.6rem;
+  }
+  
+  /* 調整回到頂部按鈕位置 */
+  .to-top-btn {
+    bottom: 60px !important;
+  }
+  
+  /* 調整推文間距 */
+  .tweet {
+    padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 1.5);
+  }
+  
+  .tweet-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .tweet-header {
+    gap: calc(var(--spacing-unit) * 0.5);
+  }
+  
+  .tweet-name {
+    font-size: 0.9rem;
+  }
+  
+  .tweet-id {
+    font-size: 0.8rem;
+  }
+  
+  .tweet-time {
+    font-size: 0.8rem;
+  }
+  
+  .tweet-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  
+  .tweet-actions {
+    margin-top: calc(var(--spacing-unit) * 0.5);
+  }
+  
+  .action-btn {
+    padding: calc(var(--spacing-unit) * 0.75);
+  }
+  
+  .action-btn .icon {
+    font-size: 18px;
   }
 }
 

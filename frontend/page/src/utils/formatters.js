@@ -38,9 +38,19 @@ export function formatDateForScroller(dateInput) {
  * @param {string} text - 原始文字
  * @returns {string} 包含連結的HTML字串
  */
-export function linkify(text) {
+export function linkify(text, searchTerm = '') {
   if (!text) return '';
-  return text.replace(/#([\w\u3000-\u9fff\u3040-\u30ff\uff00-\uffef!-]+)/g, 
+  
+  let processedText = text;
+  
+  // 如果有搜尋關鍵字，先高亮顯示
+  if (searchTerm && searchTerm.trim()) {
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    processedText = processedText.replace(regex, '<mark class="search-highlight">$1</mark>');
+  }
+  
+  // 處理 hashtag
+  return processedText.replace(/#([\w\u3000-\u9fff\u3040-\u30ff\uff00-\uffef!-]+)/g, 
     '<a href="#" class="hashtag">#$1</a>'
   );
 }

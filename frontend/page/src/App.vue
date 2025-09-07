@@ -36,6 +36,27 @@
             @toggleTheme="toggleTheme"
           />
           
+          <!-- 手機版搜尋框 -->
+          <div v-if="ui.showMobileSearch" class="mobile-search-container">
+            <div class="mobile-search-box">
+              <input
+                ref="mobileSearchInput"
+                v-model="filters.search"
+                type="text"
+                :placeholder="t('search_placeholder')"
+                class="mobile-search-input"
+                @blur="onSearchBlur"
+                @keyup.enter="onSearchBlur"
+              />
+              <button 
+                class="mobile-search-close"
+                @click="ui.showMobileSearch = false"
+              >
+                <span class="icon">close</span>
+              </button>
+            </div>
+          </div>
+          
           <!-- 手機版導航列 - 橫向滾動的成員選擇 -->
           <MobileNav 
             :filters="filters"
@@ -60,10 +81,12 @@
             :filteredTweets="filteredTweets"
             :authors="authors"
             :ui="ui"
+            :searchTerm="filters.search"
             @openDetail="openDetail"
             @toggleLike="toggleLike"
             @shareTweet="shareTweet"
             @handleTweetTextClick="handleTweetTextClick"
+            @filterByMember="setMemberFilter"
           />
         </main>
 
@@ -122,6 +145,31 @@
 
     <!-- Toast 通知 - 顯示操作結果訊息 -->
     <ToastNotification :toast="toast" />
+
+
+    <!-- 下拉刷新指示器 -->
+    <PullRefreshIndicator
+      :visible="shouldShowRefreshIndicator()"
+      :pullDistance="pullRefreshState.pullDistance"
+      :isRefreshing="pullRefreshState.isRefreshing"
+    />
+
+    <!-- 底部導航欄 -->
+    <BottomNavigation
+      :filters="filters"
+      :prefs="prefs"
+      @resetFilters="resetFilters"
+      @focusSearch="focusSearch"
+      @toggleLikedFilter="toggleLikedFilter"
+      @openDateNavModal="openDateNavModal"
+      @toggleTheme="toggleTheme"
+    />
+
+    <!-- 生日提醒 -->
+    <BirthdayReminder
+      :authors="authors"
+      @close="() => {}"
+    />
   </div>
 </template>
 
@@ -131,6 +179,8 @@ import { useI18n } from 'vue-i18n';
 import { useAppState } from './composables/useAppState.js';
 import { useApi } from './composables/useApi.js';
 import { useImageLoader } from './composables/useImageLoader.js';
+import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
+import { usePullRefresh } from './composables/usePullRefresh.js';
 import { shareTweetAsImage } from './utils/html2canvas-helper.js';
 import { formatTime, linkify } from './utils/formatters.js';
 import { processMemberData } from './utils/assets.js';
@@ -157,6 +207,9 @@ import PostDetailModal from './components/modals/PostDetailModal.vue';
 import ProfileModal from './components/modals/ProfileModal.vue';
 import DateNavModal from './components/modals/DateNavModal.vue';
 import TimelineBar from './components/ui/TimelineBar.vue';
+import PullRefreshIndicator from './components/ui/PullRefreshIndicator.vue';
+import BottomNavigation from './components/layout/BottomNavigation.vue';
+import BirthdayReminder from './components/ui/BirthdayReminder.vue';
 
 // === 使用 Composable 管理狀態 ===
 const {
@@ -195,6 +248,23 @@ const { fetchMembers, fetchTweets, toggleLike: apiToggleLike, withRetry } = useA
 
 // === 使用圖片載入管理 ===
 const { preloadMemberImages } = useImageLoader();
+
+// === 使用鍵盤快捷鍵管理 ===
+const { 
+  updateTweetElements, 
+  navigateToTweet, 
+  getFocusedTweet, 
+  resetFocus,
+  initKeyboardListeners 
+} = useKeyboardShortcuts();
+
+// === 使用下拉刷新管理 ===
+const { 
+  pullRefreshState, 
+  addPullRefreshListeners, 
+  getPullProgress, 
+  shouldShowRefreshIndicator 
+} = usePullRefresh();
 
 // === DOM 元素引用 ===
 const searchInput = ref(null);       // 桌面版搜尋輸入框引用
@@ -398,7 +468,10 @@ const scrollToDate = (tweetId) => {
   }
 };
 
-const handleScroll = () => { ui.showTop = window.scrollY > 400; };
+const handleScroll = () => { 
+  // 只有在滾動超過 400px 且不在頂部附近時才顯示回到頂部按鈕
+  ui.showTop = window.scrollY > 400 && window.scrollY > 50; 
+};
 
 const showToast = (message, type = 'success') => { 
   if (toastTimeout) clearTimeout(toastTimeout); 
@@ -406,6 +479,46 @@ const showToast = (message, type = 'success') => {
   toast.type = type; 
   toast.show = true; 
   toastTimeout = setTimeout(() => { toast.show = false; }, 3000); 
+};
+
+// === 鍵盤快捷鍵回調函數 ===
+const handleTweetNavigate = (direction) => {
+  navigateToTweet(direction, filteredTweets.value);
+};
+
+const handleTweetLike = () => {
+  const focusedTweet = getFocusedTweet(filteredTweets.value);
+  if (focusedTweet) {
+    toggleLike(focusedTweet);
+  }
+};
+
+const handleTweetShare = () => {
+  const focusedTweet = getFocusedTweet(filteredTweets.value);
+  if (focusedTweet) {
+    shareTweet(focusedTweet);
+  }
+};
+
+const handleModalClose = () => {
+  closeAllModals();
+};
+
+const handleSearchFocus = () => {
+  focusSearch();
+};
+
+// === 下拉刷新回調函數 ===
+const handlePullRefresh = async () => {
+  try {
+    // 重新載入推文資料
+    const tweetsData = await withRetry(() => fetchTweets());
+    loadTweets(tweetsData);
+    showToast('推文已更新', 'success');
+  } catch (error) {
+    console.error('刷新失敗:', error);
+    showToast('刷新失敗', 'error');
+  }
 };
 
 // 應用主題（已移至 useAppState）
@@ -479,6 +592,15 @@ const initData = async () => {
 onMounted(async () => { 
   applyTheme(); 
   
+  // 初始化鍵盤快捷鍵
+  initKeyboardListeners({
+    onTweetNavigate: handleTweetNavigate,
+    onTweetLike: handleTweetLike,
+    onTweetShare: handleTweetShare,
+    onModalClose: handleModalClose,
+    onSearchFocus: handleSearchFocus
+  });
+  
   try {
     await initData(); 
     console.log('資料初始化成功');
@@ -492,10 +614,18 @@ onMounted(async () => {
     nextTick(() => {
     if (allTweets.length > 0) {
       setupIntersectionObserver();
+      // 更新推文元素列表供鍵盤導航使用
+      const tweetElements = document.querySelectorAll('.tweet[data-tweet-id]');
+      updateTweetElements(Array.from(tweetElements));
     }
   });
   
-  window.addEventListener('scroll', handleScroll, { passive: true }); 
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  
+  // 初始化下拉刷新監聽器（僅手機版）
+  if (window.innerWidth <= 768) {
+    addPullRefreshListeners(document.body, handlePullRefresh);
+  }
 });
 
 onBeforeUnmount(() => { 
@@ -562,6 +692,73 @@ watch(() => prefs.dark, applyTheme);
   position: sticky;
   top: 0;
   height: 100vh;
+}
+
+/* 手機版搜尋框樣式 */
+.mobile-search-container {
+  position: sticky;
+  top: 58px;
+  z-index: 9;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: var(--spacing-unit);
+  backdrop-filter: blur(12px);
+}
+
+.mobile-search-box {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-unit);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: calc(var(--spacing-unit) * 0.5);
+}
+
+.mobile-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: calc(var(--spacing-unit) * 0.5);
+  outline: none;
+}
+
+.mobile-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.mobile-search-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: var(--transition-fast);
+}
+
+.mobile-search-close:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.mobile-search-close .icon {
+  font-family: 'Material Symbols Outlined';
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* 桌面版隱藏手機版搜尋框 */
+@media (min-width: 769px) {
+  .mobile-search-container {
+    display: none;
+  }
 }
 
 /* 其他樣式會在CSS檔案中定義 */

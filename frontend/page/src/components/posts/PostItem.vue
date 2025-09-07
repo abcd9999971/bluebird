@@ -10,14 +10,35 @@
       :src="tweet.avatar_url || authors[tweet.author_id]?.avatar_url || ''" 
       :alt="tweet.name_ja || authors[tweet.author_id]?.name_ja || tweet.author_id" 
       class="tweet-avatar"
-    >
+    />
     
     <div class="tweet-body">
       <!-- 推文標題行 -->
       <div class="tweet-header">
         <div class="tweet-author-info">
-          <span class="tweet-name">{{ tweet.name_ja || authors[tweet.author_id]?.name_ja || tweet.author_id }}@いきづらい部！</span>
-          <span class="tweet-id">{{ tweet.twitter_id || authors[tweet.author_id]?.twitter_id || `@${tweet.author_id}` }}</span>
+          <span 
+            class="tweet-name clickable" 
+            @click.stop="filterByMember(tweet.author_id)"
+            @mouseenter="showMemberTooltip = true"
+            @mouseleave="showMemberTooltip = false"
+          >
+            {{ tweet.name_ja || authors[tweet.author_id]?.name_ja || tweet.author_id }}@いきづらい部！
+          </span>
+          <span 
+            class="tweet-id clickable" 
+            @click.stop="filterByMember(tweet.author_id)"
+            @mouseenter="showMemberTooltip = true"
+            @mouseleave="showMemberTooltip = false"
+          >
+            {{ tweet.twitter_id || authors[tweet.author_id]?.twitter_id || `@${tweet.author_id}` }}
+          </span>
+          <!-- 成員篩選提示框 -->
+          <div 
+            v-if="showMemberTooltip" 
+            class="member-tooltip"
+          >
+            {{ t('member_filter_tooltip') }}
+          </div>
         </div>
         <div class="tweet-time-container">
           <span 
@@ -39,7 +60,7 @@
       </div>
       
       <!-- 推文內容 -->
-      <div class="tweet-text" v-html="linkify(tweet.content)" @click="handleTweetTextClick"></div>
+      <div class="tweet-text" v-html="linkify(tweet.content, searchTerm)" @click="handleTweetTextClick"></div>
       
       <!-- 推文操作按鈕 -->
       <div class="tweet-actions">
@@ -62,17 +83,24 @@
       </div>
     </div>
   </article>
+
+
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { formatTime, linkify } from '../../utils/formatters.js';
+import { useSwipeGestures } from '../../composables/useSwipeGestures.js';
 
 // 定義 props - 從父組件接收的資料
 const props = defineProps({
   tweet: Object,
   authors: Object,
-  ui: Object
+  ui: Object,
+  searchTerm: {
+    type: String,
+    default: ''
+  }
 });
 
 // 定義 emits - 向父組件發送的事件
@@ -80,12 +108,21 @@ const emit = defineEmits([
   'openDetail',
   'toggleLike',
   'shareTweet',
-  'handleTweetTextClick'
+  'handleTweetTextClick',
+  'copyLink',
+  'filterByMember'
 ]);
 
 // 日期格式狀態
 const showFullTime = ref(false);
 const showTooltip = ref(false);
+
+// 成員篩選提示框狀態
+const showMemberTooltip = ref(false);
+
+
+// 滑動手勢
+const { addSwipeListeners } = useSwipeGestures();
 
 // 計算顯示的時間格式
 const displayTime = computed(() => {
@@ -113,10 +150,56 @@ const shareTweet = (tweet) => emit('shareTweet', tweet);
 // 事件處理函數 - 處理推文文字點擊（hashtag）
 const handleTweetTextClick = (e) => emit('handleTweetTextClick', e);
 
+// 事件處理函數 - 按成員篩選
+const filterByMember = (authorId) => emit('filterByMember', authorId);
+
+// 翻譯函數
+const t = (key) => {
+  const translations = {
+    'ja': {
+      member_filter_tooltip: 'このメンバーの日誌を表示'
+    }
+  };
+  return translations['ja']?.[key] || key;
+};
+
 // 事件處理函數 - 切換時間格式
 const toggleTimeFormat = () => {
   showFullTime.value = !showFullTime.value;
 };
+
+
+
+// 滑動手勢回調
+const handleSwipeLeft = () => {
+  // 左滑點讚
+  toggleLike(props.tweet);
+};
+
+const handleSwipeRight = () => {
+  // 右滑分享
+  shareTweet(props.tweet);
+};
+
+// 生命週期管理
+let cleanupSwipeListeners = null;
+
+onMounted(() => {
+  // 為推文元素添加滑動手勢
+  const tweetElement = document.querySelector(`[data-tweet-id="${props.tweet.id}"]`);
+  if (tweetElement) {
+    cleanupSwipeListeners = addSwipeListeners(tweetElement, {
+      onSwipeLeft: handleSwipeLeft,
+      onSwipeRight: handleSwipeRight
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  if (cleanupSwipeListeners) {
+    cleanupSwipeListeners();
+  }
+});
 </script>
 
 <style scoped>
@@ -129,6 +212,10 @@ const toggleTimeFormat = () => {
   transition: var(--transition-fast);
   scroll-margin-top: 60px;
   cursor: pointer;
+  animation: tweet-slide-in 0.4s ease-out;
+  /* 保守的優化：使用CSS硬體加速 */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .tweet:hover {
@@ -137,13 +224,23 @@ const toggleTimeFormat = () => {
   box-shadow: var(--shadow-md);
 }
 
+.tweet.tweet-focused {
+  background-color: color-mix(in srgb, var(--brand-color) 10%, var(--bg-secondary));
+  border-left: 3px solid var(--brand-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
 .tweet-avatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  object-fit: cover;
   flex-shrink: 0;
   transition: var(--transition-fast);
+  object-fit: cover;
+  /* 保守的優化：圖片載入優化 */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 .tweet-avatar:hover {
@@ -169,6 +266,7 @@ const toggleTimeFormat = () => {
   gap: calc(var(--spacing-unit) * 0.5);
   flex: 1;
   min-width: 0;
+  position: relative;
 }
 
 .tweet-name {
@@ -176,9 +274,29 @@ const toggleTimeFormat = () => {
   color: var(--text-primary);
 }
 
+.tweet-name.clickable {
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.tweet-name.clickable:hover {
+  color: var(--brand-color);
+  text-decoration: underline;
+}
+
 .tweet-id {
   color: var(--text-secondary);
   font-size: 0.9rem;
+}
+
+.tweet-id.clickable {
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.tweet-id.clickable:hover {
+  color: var(--brand-color);
+  text-decoration: underline;
 }
 
 .tweet-time-container {
@@ -243,6 +361,37 @@ const toggleTimeFormat = () => {
   }
 }
 
+/* 成員篩選提示框樣式 */
+.member-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  padding: 6px 12px;
+  background-color: var(--bg-tooltip);
+  color: var(--text-tooltip);
+  border: 1px solid var(--border-tooltip);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: var(--shadow-tooltip);
+  backdrop-filter: blur(8px);
+  animation: tooltip-fade-in 0.2s ease-out;
+}
+
+/* 成員篩選提示框箭頭 */
+.member-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: var(--bg-tooltip);
+}
+
 .tweet-text {
   white-space: pre-wrap;
   word-break: break-word;
@@ -259,6 +408,14 @@ const toggleTimeFormat = () => {
 
 .tweet-text :deep(.hashtag):hover {
   text-decoration: underline;
+}
+
+.tweet-text :deep(.search-highlight) {
+  background-color: color-mix(in srgb, var(--brand-color) 30%, transparent);
+  color: var(--text-primary);
+  padding: 1px 2px;
+  border-radius: 2px;
+  font-weight: 600;
 }
 
 .tweet-actions {
@@ -278,6 +435,10 @@ const toggleTimeFormat = () => {
   color: var(--text-secondary);
   transition: var(--transition-fast);
   cursor: pointer;
+}
+
+.action-btn:active {
+  animation: button-press 0.1s ease-out;
 }
 
 .action-btn:hover {

@@ -17,8 +17,29 @@
           <!-- 推文標題行 -->
           <div class="tweet-header">
             <div class="tweet-author-info">
-              <span class="tweet-name">{{ ui.detailTweet.name_ja }}@いきづらい部！</span>
-              <span class="tweet-id" @click="handleIdClick(ui.detailTweet)">{{ ui.detailTweet.twitter_id }}</span>
+              <span 
+                class="tweet-name clickable" 
+                @click.stop="filterByMember(ui.detailTweet.author_id)"
+                @mouseenter="showMemberTooltip = true"
+                @mouseleave="showMemberTooltip = false"
+              >
+                {{ ui.detailTweet.name_ja }}@いきづらい部！
+              </span>
+              <span 
+                class="tweet-id clickable" 
+                @click.stop="filterByMember(ui.detailTweet.author_id)"
+                @mouseenter="showMemberTooltip = true"
+                @mouseleave="showMemberTooltip = false"
+              >
+                {{ ui.detailTweet.twitter_id }}
+              </span>
+              <!-- 成員篩選提示框 -->
+              <div 
+                v-if="showMemberTooltip" 
+                class="member-tooltip"
+              >
+                {{ t('member_filter_tooltip') }}
+              </div>
             </div>
             <div class="tweet-time-container">
               <span 
@@ -56,11 +77,14 @@ const props = defineProps({
 });
 
 // 定義 emits - 向父組件發送的事件
-const emit = defineEmits(['closeModal', 'setMemberFilter']);
+const emit = defineEmits(['closeModal', 'setMemberFilter', 'filterByMember']);
 
 // 日期格式狀態
 const showFullTime = ref(false);
 const showTooltip = ref(false);
+
+// 成員篩選提示框狀態
+const showMemberTooltip = ref(false);
 
 // 計算顯示的時間格式
 const displayTime = computed(() => {
@@ -80,7 +104,8 @@ const displayTime = computed(() => {
 const t = (key) => {
   const translations = {
     'ja': { 
-      tweet_detail_header: '日誌詳細'
+      tweet_detail_header: '日誌詳細',
+      member_filter_tooltip: 'このメンバーの日誌を表示'
     }
   };
   return translations['ja']?.[key] || key;
@@ -107,6 +132,9 @@ const toggleTimeFormat = () => {
   showFullTime.value = !showFullTime.value;
 };
 
+// 事件處理函數 - 按成員篩選
+const filterByMember = (authorId) => emit('filterByMember', authorId);
+
 // 事件處理函數 - 處理 ID 點擊
 const handleIdClick = (tweet) => {
   // 如果當前不是在該成員的頁面，則啟用該成員的篩選器
@@ -122,7 +150,7 @@ const handleIdClick = (tweet) => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: var(--bg-primary);
+  background-color: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--border-radius);
   max-width: 600px;
@@ -133,6 +161,7 @@ const handleIdClick = (tweet) => {
   opacity: 0;
   transition: opacity var(--transition-duration) ease;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
 }
 
 .modal.show {
@@ -145,7 +174,7 @@ const handleIdClick = (tweet) => {
   align-items: center;
   padding: var(--spacing-unit);
   border-bottom: 1px solid var(--border-primary);
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-tertiary);
 }
 
 .modal-header h3 {
@@ -212,11 +241,22 @@ const handleIdClick = (tweet) => {
   gap: calc(var(--spacing-unit) * 0.5);
   flex: 1;
   min-width: 0;
+  position: relative;
 }
 
 .tweet-name {
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.tweet-name.clickable {
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.tweet-name.clickable:hover {
+  color: var(--brand-color);
+  text-decoration: underline;
 }
 
 .tweet-id {
@@ -226,8 +266,13 @@ const handleIdClick = (tweet) => {
   transition: var(--transition-fast);
 }
 
-.tweet-id:hover {
-  color: var(--text-primary);
+.tweet-id.clickable {
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.tweet-id.clickable:hover {
+  color: var(--brand-color);
   text-decoration: underline;
 }
 
@@ -291,6 +336,37 @@ const handleIdClick = (tweet) => {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+}
+
+/* 成員篩選提示框樣式 */
+.member-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  padding: 6px 12px;
+  background-color: var(--bg-tooltip);
+  color: var(--text-tooltip);
+  border: 1px solid var(--border-tooltip);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: var(--shadow-tooltip);
+  backdrop-filter: blur(8px);
+  animation: tooltip-fade-in 0.2s ease-out;
+}
+
+/* 成員篩選提示框箭頭 */
+.member-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: var(--bg-tooltip);
 }
 
 .tweet-text {

@@ -1,16 +1,19 @@
 <template>
   <!-- 推文列表 -->
-  <div v-if="filteredTweets.length > 0">
+  <div v-if="filteredTweets.length > 0" class="post-list-container">
+    <!-- 直接渲染所有推文，採用保守的優化方式 -->
     <PostItem 
       v-for="tweet in filteredTweets" 
       :key="tweet.id"
       :tweet="tweet"
       :authors="authors"
       :ui="ui"
+      :searchTerm="searchTerm"
       @openDetail="openDetail"
       @toggleLike="toggleLike"
       @shareTweet="shareTweet"
       @handleTweetTextClick="handleTweetTextClick"
+      @filterByMember="filterByMember"
     />
   </div>
 
@@ -22,13 +25,18 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import PostItem from './PostItem.vue';
 
 // 定義 props - 從父組件接收的資料
 const props = defineProps({
   filteredTweets: Array,
   authors: Object,
-  ui: Object
+  ui: Object,
+  searchTerm: {
+    type: String,
+    default: ''
+  }
 });
 
 // 定義 emits - 向父組件發送的事件
@@ -36,7 +44,8 @@ const emit = defineEmits([
   'openDetail',
   'toggleLike',
   'shareTweet',
-  'handleTweetTextClick'
+  'handleTweetTextClick',
+  'filterByMember'
 ]);
 
 // 翻譯函數 - 獲取多語言文字
@@ -60,9 +69,40 @@ const shareTweet = (tweet) => emit('shareTweet', tweet);
 
 // 事件處理函數 - 處理推文文字點擊（hashtag）
 const handleTweetTextClick = (e) => emit('handleTweetTextClick', e);
+
+// 事件處理函數 - 按成員篩選
+const filterByMember = (authorId) => emit('filterByMember', authorId);
+
+// 保守的優化方式：使用CSS優化和基本性能改進
+// 生命週期管理
+onMounted(() => {
+  // 預載入關鍵圖片以提升用戶體驗
+  if (props.authors) {
+    const avatarUrls = Object.values(props.authors)
+      .map(author => author.avatar_url)
+      .filter(url => url);
+    
+    // 預載入頭像圖片
+    avatarUrls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  // 清理邏輯
+});
 </script>
 
 <style scoped>
+.post-list-container {
+  width: 100%;
+  /* 保守的優化：使用CSS硬體加速和優化渲染 */
+  contain: layout style paint;
+  will-change: scroll-position;
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;

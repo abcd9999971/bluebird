@@ -234,10 +234,16 @@ const scrollToDateAndClose = (tweetId) => {
 }
 
 .date-list {
-  max-height: 40vh;
+  max-height: 50vh;
   overflow-y: auto;
   border: 1px solid var(--border-primary);
-  border-radius: calc(var(--border-radius) / 2);
+  border-radius: var(--radius-md);
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.date-list::-webkit-scrollbar {
+  display: none;
 }
 
 .date-list-item {

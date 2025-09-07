@@ -1,6 +1,6 @@
 /**
  * 圖片載入管理 Composable
- * 提供圖片預載入、懶載入和快取功能
+ * 提供圖片預載入和快取功能
  */
 
 import { ref, reactive } from 'vue';
@@ -120,36 +120,6 @@ export function useImageLoader() {
     }
   };
 
-  /**
-   * 懶載入圖片（使用 Intersection Observer）
-   * @param {HTMLElement} element - 圖片元素
-   * @param {string} src - 圖片來源
-   * @param {Object} options - 載入選項
-   */
-  const lazyLoadImage = (element, src, options = {}) => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            loadImage(src, options).then(success => {
-              if (success) {
-                element.src = src;
-                element.classList.add('loaded');
-              } else {
-                element.classList.add('error');
-              }
-            });
-            observer.unobserve(element);
-          }
-        });
-      },
-      {
-        rootMargin: `${IMAGE_CONFIG.LAZY_LOAD_OFFSET}px`
-      }
-    );
-
-    observer.observe(element);
-  };
 
   /**
    * 取得圖片載入狀態
@@ -198,7 +168,6 @@ export function useImageLoader() {
     loadImage,
     loadImages,
     preloadCriticalImages,
-    lazyLoadImage,
     getImageState,
     clearImageCache,
     preloadMemberImages

@@ -128,6 +128,7 @@ const getTwitterUrl = (twitterId) => {
 .member-header {
   position: relative;
   margin-bottom: 70px;
+  animation: member-fade-in 0.5s ease-out;
 }
 
 .member-banner {
@@ -250,6 +251,10 @@ const getTwitterUrl = (twitterId) => {
   transition: var(--transition-fast);
   z-index: 10;
   cursor: pointer;
+}
+
+.profile-btn:active {
+  animation: button-press 0.1s ease-out;
 }
 
 html[data-member-theme="true"] .profile-btn {
