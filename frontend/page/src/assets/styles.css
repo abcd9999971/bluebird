@@ -1,56 +1,119 @@
 /* いきづらい部！ 部員日誌 樣式 */
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
 :root {
+  /* 舊推特經典配色系統 */
   --brand-blue: #1d9bf0;
   --brand-color: var(--brand-blue);
   --accent-pink: #e0245e;
   --share-green: #17bf63;
+  --warning-orange: #f39c12;
+  
+  /* 文字色彩 */
   --text-primary: #0f1419;
   --text-secondary: #536471;
+  --text-tertiary: #8b98a5;
   --text-link: var(--brand-color);
   --text-on-brand: #ffffff;
+  --text-on-surface-variant: #536471;
+  
+  /* 背景色彩 */
   --bg-primary: #f7f9f9;
   --bg-secondary: #ffffff;
   --bg-tertiary: #eff3f4;
+  --bg-surface: #ffffff;
+  --bg-surface-variant: #eff3f4;
   --bg-overlay: rgba(91, 112, 131, 0.4);
   --bg-hover: rgba(15, 20, 25, 0.05);
+  
+  /* 邊框色彩 */
   --border-primary: #eff3f4;
   --border-secondary: #cccccc;
+  --border-outline: #536471;
+  --border-outline-variant: #eff3f4;
+  
+  /* 字體設定 */
   --font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-size-base: 16px;
   --line-height-base: 1.65;
+  
+  /* 間距系統 */
   --spacing-unit: 8px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  
+  /* 佈局尺寸 */
   --main-max-width: 1400px;
   --timeline-width: 700px;
   --sidebar-width: 350px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
+  
+  /* 圓角系統 - 更圓潤的設計 */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 36px rgba(0, 0, 0, 0.15);
+  
+  /* 平滑陰影系統 */
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-3: 0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-4: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-5: 0 12px 32px rgba(0, 0, 0, 0.15), 0 6px 16px rgba(0, 0, 0, 0.1);
+  
+  /* 精緻過渡動畫 */
   --transition-fast: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-standard: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-emphasized: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --transition-smooth: all 0.15s ease-out;
+  
+  /* 條紋背景 */
   --bg-stripe-base-color: var(--brand-blue);
-  --bg-stripe: repeating-linear-gradient(45deg, color-mix(in srgb, var(--bg-stripe-base-color) 20%, transparent), color-mix(in srgb, var(--bg-stripe-base-color) 20%, transparent) 4px, transparent 4px, transparent 35px);
+  --bg-stripe: repeating-linear-gradient(45deg, color-mix(in srgb, var(--bg-stripe-base-color) 18%, transparent), color-mix(in srgb, var(--bg-stripe-base-color) 18%, transparent) 4px, transparent 4px, transparent 36px);
+  
+  /* 向下兼容的舊變數名稱 */
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-lg: var(--shadow-3);
 }
 
 html[data-theme='dark'] {
+  /* 舊推特深色主題配色 */
   --brand-blue: #2d9bf0;
   --accent-pink: #ef4f81;
   --share-green: #25c56e;
+  --warning-orange: #f39c12;
+  
+  /* 深色主題文字色彩 */
   --text-primary: #e7e9ea;
   --text-secondary: #8b98a5;
+  --text-tertiary: #6e7681;
+  --text-on-brand: #ffffff;
+  --text-on-surface-variant: #8b98a5;
+  
+  /* 深色主題背景色彩 */
   --bg-primary: #000000;
   --bg-secondary: #16181c;
   --bg-tertiary: #1e2226;
+  --bg-surface: #16181c;
+  --bg-surface-variant: #1e2226;
   --bg-overlay: rgba(30, 39, 50, 0.4);
   --bg-hover: rgba(231, 233, 234, 0.1);
+  
+  /* 深色主題邊框色彩 */
   --border-primary: #2f3336;
   --border-secondary: #536471;
-      --bg-stripe-base-color: var(--brand-blue);
+  --border-outline: #536471;
+  --border-outline-variant: #2f3336;
+  
+  --bg-stripe-base-color: var(--brand-blue);
 }
 
 html[data-member-theme="true"] { 
@@ -534,12 +597,12 @@ html[data-member-theme="true"] .profile-btn:hover {
 }
 
 .year-scroller::-webkit-scrollbar { 
-  height: 4px; 
+  display: none; 
 }
 
-.year-scroller::-webkit-scrollbar-thumb { 
-  background: var(--border-secondary); 
-  border-radius: 2px; 
+.year-scroller {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .month-grid { 
@@ -548,31 +611,42 @@ html[data-member-theme="true"] .profile-btn:hover {
   gap: calc(var(--spacing-unit) / 2); 
 }
 
+.month-grid .switcher-btn {
+  border-radius: var(--radius-lg);
+}
+
 .switcher-row { 
   display: flex; 
   gap: calc(var(--spacing-unit) / 2); 
   padding-block: calc(var(--spacing-unit)/2); 
 }
 
-.switcher-btn { 
-  padding: calc(var(--spacing-unit) / 2) var(--spacing-unit); 
-  border: 1px solid var(--border-primary); 
-  border-radius: var(--radius-full); 
-  background: transparent; 
-  color: var(--text-primary); 
-  transition: var(--transition-fast); 
-  white-space: nowrap; 
+.switcher-row .switcher-btn {
+  border-radius: var(--radius-lg);
 }
 
-.switcher-btn:hover:not(:disabled) { 
-  border-color: var(--brand-color); 
+.switcher-btn {
+  padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--text-primary);
+  transition: var(--transition-standard);
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.switcher-btn.active { 
-  background-color: var(--brand-color); 
-  color: var(--text-on-brand); 
-  border-color: var(--brand-color); 
-  font-weight: 500; 
+.switcher-btn:hover:not(:disabled) {
+  border-color: var(--brand-color);
+  color: var(--brand-color);
+  background-color: color-mix(in srgb, var(--brand-color) 8%, transparent);
+}
+
+.switcher-btn.active {
+  background-color: var(--brand-color);
+  color: var(--text-on-brand);
+  border-color: var(--brand-color);
+  font-weight: 500;
 }
 
 .switcher-btn:disabled { 
@@ -583,44 +657,81 @@ html[data-member-theme="true"] .profile-btn:hover {
 .date-list { 
   flex-grow: 1; 
   overflow-y: auto; 
-  padding: var(--spacing-unit); 
+  padding: var(--spacing-unit);
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.date-list-item { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5); 
-  border-radius: var(--radius-md); 
-  margin-bottom: calc(var(--spacing-unit) / 2); 
-  transition: var(--transition-fast); 
-  border: 1px solid transparent; 
-  cursor: pointer; 
+.date-list::-webkit-scrollbar {
+  display: none;
 }
 
-.date-list-item:hover { 
-  background-color: var(--bg-hover); 
-  transform: translateX(4px); 
+.date-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+  border-radius: var(--radius-md);
+  margin-bottom: calc(var(--spacing-unit) / 2);
+  transition: var(--transition-bounce);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
-.date-list-item.active { 
-  background-color: color-mix(in srgb, var(--brand-color) 10%, transparent); 
-  border-color: var(--brand-color); 
-  color: var(--brand-color); 
-  font-weight: 700; 
+.date-list-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(29, 155, 240, 0.1), transparent);
+  transition: var(--transition-standard);
+  z-index: 0;
+}
+
+.date-list-item:hover::before {
+  left: 100%;
+}
+
+.date-list-item:hover {
+  background-color: var(--bg-hover);
+  transform: scale(1.03) translateY(-1px);
+  box-shadow: var(--shadow-2);
+}
+
+.date-list-item.active {
+  background-color: color-mix(in srgb, var(--brand-color) 12%, transparent);
+  border-color: var(--brand-color);
+  color: var(--brand-color);
+  font-weight: 700;
+  transform: scale(1.03) translateY(-1px);
+  box-shadow: var(--shadow-3);
+}
+
+.date-list-item.active::before {
+  background: linear-gradient(90deg, transparent, rgba(29, 155, 240, 0.2), transparent);
 }
 
 .date-count { 
-  font-size: 0.85rem; 
+  font-size: 0.75rem; 
+  font-weight: 600;
   color: var(--text-secondary); 
-  background-color: var(--bg-tertiary); 
-  padding: 2px 6px; 
-  border-radius: var(--radius-full); 
+  width: 20px;
+  height: 20px;
+  border: 1px solid color-mix(in srgb, var(--text-secondary) 20%, transparent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-standard);
+  background-color: color-mix(in srgb, var(--text-secondary) 8%, transparent);
 }
 
 .date-list-item.active .date-count { 
-  background-color: var(--brand-color); 
-  color: var(--text-on-brand); 
+  color: var(--brand-color);
+  border-color: var(--brand-color);
 }
 
 .empty-state { 
@@ -856,7 +967,32 @@ html[data-member-theme="true"] .profile-btn:hover {
 
 
 
-/* 響應式設計 */
+/* 響應式設計 - 支援多種螢幕比例 */
+
+/* 超寬螢幕 21:9, 20:9 比例 (3440x1440, 2560x1080等) */
+@media (min-width: 1920px) and (min-aspect-ratio: 21/9) {
+  .app-container {
+    max-width: 1600px;
+  }
+  
+  .timeline {
+    max-width: 800px;
+  }
+  
+  .sidebar-left,
+  .sidebar-right {
+    width: 400px;
+  }
+}
+
+/* 標準寬螢幕 16:10, 16:9 比例 */
+@media (max-width: 1440px) {
+  .app-container {
+    max-width: 1200px;
+  }
+}
+
+/* 筆電螢幕 */
 @media (max-width: 1200px) {
   .sidebar-right { 
     display: none; 
@@ -865,7 +1001,62 @@ html[data-member-theme="true"] .profile-btn:hover {
   .timeline { 
     max-width: none; 
   }
+  
+  .app-container {
+    max-width: 1000px;
+  }
 }
+
+/* 平板螢幕 */
+@media (max-width: 1024px) {
+  .sidebar-left {
+    width: 280px;
+  }
+  
+  .timeline {
+    border-left: none;
+  }
+}
+
+/* 智慧響應式設計 - 基於視窗高度和設備像素比 */
+@media (max-width: 1024px) and (max-height: 1366px) and (orientation: portrait) {
+  /* 平板直向模式 */
+  .member-header {
+    margin-bottom: 120px;
+  }
+  
+  .member-banner {
+    height: 200px;
+  }
+  
+  .member-avatar {
+    width: 100px;
+    height: 100px;
+    top: 150px;
+  }
+  
+  .member-name {
+    top: 200px;
+    font-size: 1.2rem;
+  }
+  
+  .member-id {
+    top: 225px;
+    font-size: 1rem;
+  }
+  
+  .member-meta-top {
+    top: 200px;
+  }
+}
+
+/* 
+ * 智慧響應式設計說明：
+ * 1. 使用 max() 函數結合固定值和視窗單位，確保在不同螢幕尺寸下都有適當的顯示
+ * 2. 支援高解析度手機 (2K/4K) 和各種螢幕比例
+ * 3. 視窗單位 (vw/vh) 讓元素大小根據螢幕尺寸動態調整
+ * 4. 白色底板確保頭貼和文字始終可見，不會被背景遮擋
+ */
 
 @media (max-width: 768px) {
   .sidebar-left { 
@@ -876,6 +1067,7 @@ html[data-member-theme="true"] .profile-btn:hover {
     border: none; 
     width: 100%;
     max-width: 100%;
+    margin: 0 auto; /* 讓時間軸居中 */
   }
   
   .app-container { 
@@ -900,9 +1092,9 @@ html[data-member-theme="true"] .profile-btn:hover {
     border: 3px solid transparent;
     transition: var(--transition-fast);
     flex-shrink: 0;
+    /* 鍵盤導航支援 */
+    scroll-snap-align: center;
     cursor: pointer;
-    object-fit: cover;
-    display: block;
   }
   
   .mobile-avatar.active {
@@ -911,6 +1103,7 @@ html[data-member-theme="true"] .profile-btn:hover {
   }
   
   .mobile-nav {
+    display: flex;
     overflow-x: auto;
     white-space: nowrap;
     padding: var(--spacing-unit);
@@ -919,57 +1112,88 @@ html[data-member-theme="true"] .profile-btn:hover {
     background: var(--bg-secondary);
     -ms-overflow-style: none;
     scrollbar-width: none;
-    display: flex !important;
-    align-items: center;
+    /* 觸控滑動支援 */
+    scroll-behavior: smooth;
+    touch-action: pan-x;
+    /* 鍵盤導航支援 */
+    scroll-snap-type: x mandatory;
+    /* 確保不會被頭貼壓過 */
+    z-index: 10 !important;
+    position: relative;
   }
   
   .mobile-nav::-webkit-scrollbar { 
     display: none; 
   }
   
+  /* 手機版 member-header - 調整為圖片中的理想比例 */
   .member-header { 
-    margin-bottom: 80px; 
-    overflow: hidden;
+    position: relative;
+    margin-bottom: 20px;
   }
   
+  /* 橫幅 - 保持3:1比例，更狠的縮小比例 */
   .member-banner {
-    height: 180px;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    width: 100% !important;
+    height: clamp(60px, 25vw, 230px) !important; /* 最小60px，最大230px，更狠的縮放 */
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: var(--brand-color) !important;
   }
   
+  /* 頭貼 - 推文頭貼的2倍大 */
   .member-avatar { 
-    width: 60px; 
-    height: 60px; 
-    top: 120px; 
-    left: var(--spacing-unit); 
-    z-index: 10;
+    width: 80px !important; /* 40px * 2 = 80px */
+    height: 80px !important; 
+    border-radius: 50% !important; 
+    border: 2px solid var(--bg-secondary) !important; 
+    position: absolute !important; 
+    top: calc(clamp(60px, 25vw, 230px) - 40px) !important; /* 橫幅底部往上40px */
+    left: 16px !important; 
+    object-fit: cover !important;
+    z-index: 5 !important; /* 確保不會壓過 mobile-nav */
+  }
+  
+  /* 成員資訊區域 - 在頭貼右側，完全在 member-header 背景中 */
+  .member-meta-top { 
+    position: absolute !important; 
+    top: calc(clamp(60px, 25vw, 230px) + 10px) !important; /* 橫幅下方10px */
+    right: 16px !important; 
+    display: flex !important; 
+    gap: 8px !important; 
   }
   
   .member-name { 
-    top: 120px; 
-    left: 80px; 
-    font-size: 1rem; 
-    z-index: 10;
+    font-size: 0.9rem !important; 
+    font-weight: 700 !important; 
+    position: absolute !important; 
+    top: calc(clamp(60px, 25vw, 230px) + 10px) !important; /* 橫幅下方10px */
+    left: 108px !important; /* 配合更大的頭貼調整位置 */
   }
   
   .member-id { 
-    top: 145px; 
-    left: 80px; 
-    font-size: 0.9rem;
-    z-index: 10;
-  }
-  
-  .member-meta-top { 
-    top: 120px; 
-    right: var(--spacing-unit); 
-    z-index: 10;
+    color: var(--text-secondary) !important; 
+    position: absolute !important; 
+    top: calc(clamp(60px, 25vw, 230px) + 25px) !important; /* 名稱下方15px */
+    left: 108px !important; /* 配合更大的頭貼調整位置 */
+    font-size: 0.8rem !important;
   }
   
   .profile-btn {
-    padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
-    font-size: 0.9rem;
+    background-color: transparent !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-secondary) !important;
+    font-weight: 700 !important;
+    padding: 4px 8px !important;
+    border-radius: var(--radius-full) !important;
+    transition: var(--transition-fast) !important;
+    font-size: 0.7rem !important;
+  }
+  
+  .profile-btn:hover {
+    background-color: var(--bg-hover);
+    transform: scale(1.05);
   }
   
   .tweet { 
@@ -987,8 +1211,14 @@ html[data-member-theme="true"] .profile-btn:hover {
   }
   
   .modal { 
-    width: 95vw; 
-    margin: var(--spacing-unit); 
+    width: 95vw !important; 
+    margin: 0 !important;
+    /* 手機版彈窗居中 */
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    max-width: 400px !important;
   }
   
   .info-card {
@@ -1006,86 +1236,44 @@ html[data-member-theme="true"] .profile-btn:hover {
   }
 }
 
-@media (max-width: 480px) {
+/* 高解析度小螢幕手機 (如 iPhone 14 Pro Max, Samsung Galaxy S24 Ultra) */
+@media (max-width: 600px) and (max-height: 900px) and (min-resolution: 2dppx) {
+  .member-header {
+    margin-bottom: 95px;
+  }
+  
   .member-banner {
-    height: 160px;
+    height: 170px;
   }
   
-  .member-avatar { 
-    width: 50px; 
-    height: 50px; 
-    top: 110px; 
-    left: var(--spacing-unit); 
-    z-index: 10;
+  .member-header::after {
+    height: 55px;
   }
   
-  .member-name { 
-    top: 110px; 
-    left: 70px; 
-    font-size: 0.9rem; 
-    z-index: 10;
+  .member-avatar {
+    width: 75px;
+    height: 75px;
+    top: 130px;
   }
   
-  .member-id { 
-    top: 130px; 
-    left: 70px; 
-    font-size: 0.8rem;
-    z-index: 10;
+  .member-name {
+    top: 175px;
+    font-size: 1.05rem;
   }
   
-  .member-meta-top { 
-    top: 110px; 
-    right: var(--spacing-unit); 
-    z-index: 10;
-  }
-  
-  .member-header { 
-    margin-bottom: 70px; 
-    overflow: hidden;
-  }
-  
-  .profile-btn {
-    padding: calc(var(--spacing-unit) / 3) calc(var(--spacing-unit) / 2);
-    font-size: 0.8rem;
-  }
-  
-  .info-card {
-    padding: calc(var(--spacing-unit) / 3);
-    font-size: 0.7rem;
-  }
-  
-  .info-card img {
-    width: 25px;
-  }
-  
-  .tweet { 
-    padding: calc(var(--spacing-unit) / 3); 
-    gap: calc(var(--spacing-unit) / 2);
-  }
-  
-  .tweet-avatar { 
-    width: 35px; 
-    height: 35px; 
-  }
-  
-  .tweet-text {
+  .member-id {
+    top: 195px;
     font-size: 0.9rem;
   }
   
-  .tweet-header { 
-    flex-direction: column; 
-    align-items: flex-start; 
-    gap: calc(var(--spacing-unit) / 4); 
+  .member-meta-top {
+    top: 175px;
   }
   
-  .tweet-actions { 
-    justify-content: flex-start; 
-    gap: var(--spacing-unit); 
+  .profile-btn {
+    padding: calc(var(--spacing-unit) / 2) calc(var(--spacing-unit) * 0.8);
+    font-size: 0.9rem;
   }
-  
-  .month-grid { 
-    grid-template-columns: repeat(3, 1fr); 
-  }
-  
-  
 }
+
+/* 移除所有寫死的斷點，改為全動態響應式 */
