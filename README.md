@@ -52,6 +52,9 @@ bluebird-master/
 │       │   │   └── html2canvas-helper.js # 圖片分享
 │       │   ├── member.json     # 成員資料檔案
 │       │   ├── post.json       # 推文資料檔案
+│       │   ├── locales/        # 國際化語言檔案
+│       │   │   └── ja.json     # 日文語言檔案
+│       │   ├── i18n.js         # 國際化配置
 │       │   └── assets/
 │       │       └── styles.css  # 全域樣式檔案
 │       └── package.json
@@ -180,6 +183,12 @@ npm run dev
 - **`member.json`**：存放成員的靜態資料，包含姓名、顏色、個人資料等
 - **`post.json`**：存放推文的備用資料，當後端連接失敗時使用
 - 這些 JSON 檔案會在應用程式啟動時載入，並透過 `utils/assets.js` 中的函數處理動態屬性
+
+### 國際化支援
+- 使用 [vue-i18n](https://vue-i18n.intlify.dev/) 進行文本管理
+- 目前支援日文，語言包位於 `src/locales/ja.json`
+- 所有 UI 文本都透過 `t()` 函數進行翻譯
+- 未來可輕鬆擴展至其他語言，只需添加對應的語言包檔案
 
 ### 新增推文
 推文會自動從後端資料庫載入，支援即時更新。

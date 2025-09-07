@@ -127,6 +127,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { getMemberAvatar, getMemberBanner, processMemberData } from './utils/assets.js';
 import { shareTweetAsImage } from './utils/html2canvas-helper.js';
 import fallbackTweetsData from './post.json';
@@ -167,35 +168,7 @@ const projectInfo = reactive({
   }
 });
 
-// 多語言翻譯資料 - 目前支援日文
-const translations = {
-  'ja': { 
-    main_header: '部員日誌', 
-    filter_liked: 'いいねした日誌', 
-    dark_mode_label: 'テーマ切り替え', 
-    empty_state_text: '該当する日誌はありません。', 
-    search_placeholder: '日誌を検索', 
-    tweet_detail_header: '日誌詳細', 
-    share_button_title: '画像として保存', 
-    home_button_text: 'ホーム', 
-    quick_scroll_title: '日付で移動', 
-    no_tweets_for_year: 'その期間には日誌がありません', 
-    image_gen_success: '画像が正常にダウンロードされました。', 
-    image_gen_fail: '画像の生成に失敗しました。', 
-    unofficial_site_notice: 'いきづらい部！<br>の非公式メンバー日誌サイト', 
-    month_unit: '月', 
-    follow_button: 'フォロー中', 
-    profile_button: '自己紹介', 
-    profile_description: '自己紹介', 
-    profile_grade: '学年', 
-    profile_birthday: '誕生日', 
-    profile_bloodType: '血液型', 
-    profile_height: '身長', 
-    profile_hobby: '趣味', 
-    profile_skill: '特技', 
-    profile_likes: '好物' 
-  }
-};
+// 國際化文本管理已移至 src/locales/ja.json
 
 // 備用成員資料 - 當後端連接失敗時使用
 const fallbackAuthors = processMemberData(fallbackMembersData);
@@ -249,14 +222,14 @@ const toast = reactive({ show: false, message: '', type: 'success' });
 const searchInput = ref(null);       // 桌面版搜尋輸入框引用
 const mobileSearchInput = ref(null); // 手機版搜尋輸入框引用
 
+// === 國際化設定 ===
+const { t } = useI18n(); // 使用 vue-i18n 的翻譯函數
+
 // === 工具變數 ===
 let intersectionObserver = null; // 推文可見性觀察器
 let toastTimeout = null;         // Toast 自動隱藏計時器
 
 // === 工具函數 ===
-
-// 翻譯函數 - 根據鍵值獲取對應的多語言文字
-const t = (key) => translations['ja']?.[key] || key;
 
 // === 計算屬性 ===
 // 月份篩選前的推文資料 - 應用年份、成員、搜尋、喜歡等篩選條件
