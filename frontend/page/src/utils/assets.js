@@ -117,3 +117,22 @@ export function isImageLoaded(src) {
     img.src = src;
   });
 }
+
+/**
+ * 處理從 JSON 載入的成員資料，添加動態的 avatar 和 banner 屬性
+ * @param {Object} memberData - 從 member.json 載入的成員資料
+ * @returns {Object} 包含完整成員資訊的物件
+ */
+export function processMemberData(memberData) {
+  const processedMembers = {};
+  
+  for (const [memberId, memberInfo] of Object.entries(memberData)) {
+    processedMembers[memberId] = {
+      ...memberInfo,
+      avatar: getMemberAvatar(memberId),
+      banner: getMemberBanner(memberId)
+    };
+  }
+  
+  return processedMembers;
+}

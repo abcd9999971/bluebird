@@ -50,6 +50,8 @@ bluebird-master/
 │       │   ├── utils/          # 工具函數
 │       │   │   ├── assets.js   # 資源管理
 │       │   │   └── html2canvas-helper.js # 圖片分享
+│       │   ├── member.json     # 成員資料檔案
+│       │   ├── post.json       # 推文資料檔案
 │       │   └── assets/
 │       │       └── styles.css  # 全域樣式檔案
 │       └── package.json
@@ -173,6 +175,11 @@ npm run dev
 - **CSS 變數**：統一的設計系統和色彩管理
 
 ## 開發說明
+
+### 資料檔案管理
+- **`member.json`**：存放成員的靜態資料，包含姓名、顏色、個人資料等
+- **`post.json`**：存放推文的備用資料，當後端連接失敗時使用
+- 這些 JSON 檔案會在應用程式啟動時載入，並透過 `utils/assets.js` 中的函數處理動態屬性
 
 ### 新增推文
 推文會自動從後端資料庫載入，支援即時更新。

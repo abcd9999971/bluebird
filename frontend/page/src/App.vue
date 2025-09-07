@@ -127,9 +127,10 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { getMemberAvatar, getMemberBanner } from './utils/assets.js';
+import { getMemberAvatar, getMemberBanner, processMemberData } from './utils/assets.js';
 import { shareTweetAsImage } from './utils/html2canvas-helper.js';
 import fallbackTweetsData from './post.json';
+import fallbackMembersData from './member.json';
 
 // UI 組件引入
 import Loader from './components/ui/Loader.vue';
@@ -197,18 +198,7 @@ const translations = {
 };
 
 // 備用成員資料 - 當後端連接失敗時使用
-const fallbackAuthors = {
-  polka: { key:'polka', name_ja:'高橋ポルカ', id:'@polka_lion', color:'#ccb12e', avatar: getMemberAvatar('polka'), banner: getMemberBanner('polka'), profile: { description: 'L高 浅草サテライトの1年生。\n明るく元気な性格で、嬉しくなると足が勝手に踊りだす。\n小さい頃から数学が大の苦手で、高校受験に失敗。\nネット高校であるL高に入学し、スクールアイドルを見つけた。', details: { grade: '1年生', birthday: '8月18日', bloodType: '不明', height: '157cm', hobby: '昼寝', skill: 'どこでも寝れる。街頭インタビューでよく声をかけられる。クジを当てる。', likes: '麺類全般、特にうどん。チョコレート' }}},
-  mai: { key:'mai', name_ja:'麻布麻衣', id:'@My_Mai_Eld', color:'#009fdf', avatar: getMemberAvatar('mai'), banner: getMemberBanner('mai'), profile: { description: 'L高 浅草サテライトの1年生。\nプログラムとトロンのPC、論理的思考力を愛し、誰も見たことがない美しいプログラムを作るのが夢。\n合理的な性格で、人とコミュニケーションを取るのが苦手。\n本人は不本意だが、いつもポルカのペースに飲まれがち。', details: { grade: '1年生', birthday: '2月13日', bloodType: 'B型', height: '154cm', hobby: 'プログラミング、データマイニング、マイクラ', skill: 'はんだごて、DIY', likes: '果物、特にメロンとブドウ。ハンバーガー' }}},
-  akira: { key:'akira', name_ja:'五桐玲', id:'@G_Akky304250', color:'#88d66e', avatar: getMemberAvatar('akira'), banner: getMemberBanner('akira'), profile: { description: 'L高 浅草サテライトの1年生。\nクライミングでプロのアスリートを目指しており、練習やトレーニングの時間を確保するためL高に入学した。\n誰かと一緒にいる時間より、一人で身体を動かす時間を好む。\n自立しているが意外に抜けているところがある。', details: { grade: '1年生', birthday: '7月9日', bloodType: 'O型', height: '164cm', hobby: 'スポーツ（クライミング、自転車）、筋トレ', skill: '逆立ち、回転、フードアスリートマイスター、ラッピング、ハンドメイド', likes: 'ケールとナッツのサラダ、ドライフルーツ、グラノラバー、牛乳' }}},
-  hanabi: { key:'hanabi', name_ja:'駒形花火', id:'@hanabistarmine',color:'#ff2021', avatar: getMemberAvatar('hanabi'), banner: getMemberBanner('hanabi'), profile: { description: 'L高 浅草サテライトの1年生。\n浅草にある呉服屋の一人娘。\n将来は跡を継ぎ、事業を拡大させ、着物文化を世界に広めたいという野望を持っている。\n頭の中はいつも着物のことでいっぱい。\n仲見世のアイドルで、しっかり者の商売人気質。', details: { grade: '1年生', birthday: '6月11日', bloodType: 'A型', height: '160cm', hobby: '着物、読書', skill: '着付け、習字、レンジ料理', likes: '抹茶のお菓子、パスタ、もち' }}},
-  miracle: { key:'miracle', name_ja:'金澤奇跡', id:'@MiracleGoldSP', color:'#ffb7f1', avatar: getMemberAvatar('miracle'), banner: getMemberBanner('miracle'), profile: { description: 'L高 福井サテライトの2年生。\nお菓子作りが趣味で、将来の夢はパティシエとして独立開業し世界中にお店を出すこと。\n製菓学校で習うセオリー通りのやり方に疑問を持ち、個人で修行する時間を確保するためL高に入学した。\n言いたいことをはっきりと言うタイプ。', details: { grade: '2年生', birthday: '3月2日', bloodType: 'AB型', height: '152cm', hobby: 'お菓子作り', skill: 'お菓子作り、料理、徹夜', likes: '寿司（特にウニ、いくら）、あんきも、からすみ' }}},
-  noriko: { key:'noriko', name_ja:'調布のりこ', id:'@Noricco_U', color:'#ae62ff', avatar: getMemberAvatar('noriko'), banner: getMemberBanner('noriko'), profile: { description: 'L高 福井サテライトの1年生。\n自分のことをなんの取り柄もない「量産型」だと思っている。\n将来の夢は声優で、中学3年の時に思い切って応募したオーディションでなんとか事務所に所属できたが、まだ仕事はない。', details: { grade: '1年生', birthday: '4月4日', bloodType: 'B型', height: '153cm', hobby: 'アニメ、漫画、ラノベ', skill: '歌（絶対音感）、掃除、バレーボールのセッターが得意。', likes: '甘いもの全般、菓子パンも好き。プリンとシュークリーム、カスタード系。' }}},
-  yukuri: { key:'yukuri', name_ja:'春宮ゆかり', id:'@Yukuri_talk', color:'#5ecbd1', avatar: getMemberAvatar('yukuri'), banner: getMemberBanner('yukuri'), profile: { description: 'L高 梅田サテライトの1年生。\n穏やかで、品のあるお嬢様。\n幼い頃からバレエを習っており、ミュージカルが大好き。\nかつては自分も歌劇団に入りたいと思っていた。\nポルカのことを助けたいと思っている。', details: { grade: '1年生', birthday: '9月22日', bloodType: 'B型', height: '165cm', hobby: '観劇', skill: 'バレエ', likes: 'そうめん、ゼリー、グラタン、ハム、ハンバーグ、バウムクーヘン、漬物' }}},
-  aurora: { key:'aurora', name_ja:'此花輝夜', id:'@Rollie_twinkle',color:'#fd589e', avatar: getMemberAvatar('aurora'), banner: getMemberBanner('aurora'), profile: { description: 'L高 梅田サテライトの2年生。\nメイクと美容が大好きで、美容情報をSNSで発信している。\n親の仕事の都合でLAからの帰国子女。「愛は正義」がモットーで、みんなに愛を与えられる優しい心の持ち主。', details: { grade: '2年生', birthday: '1月3日', bloodType: 'O型', height: '162cm', hobby: 'ファッション、美容', skill: 'メイク、コーヒー、縁結び、サッカー', likes: 'コーヒー、ベイクドビーンズ、目玉焼き、カリカリの薄いトースト' }}},
-  midori: { key:'midori', name_ja:'山田真緑', id:'@LittlegreenCom',color:'#16b500', avatar: getMemberAvatar('midori'), banner: getMemberBanner('midori'), profile: { description: 'L高 梅田サテライトの1年生。\n環境問題に強い危機感を持っている。\n地球を守るため、環境保護活動をしながら通えるＬ高に入学した。\nHPやSNSを使って環境保護を呼びかけている。\nとても真面目で一生懸命だが、少しずれているところがある。', details: { grade: '1年生', birthday: '5月7日', bloodType: 'A型', height: '155cm', hobby: 'キャンプ', skill: 'パズル、植物標本、虫取り、釣り、星座観察、けん玉', likes: 'スモア、ワッフル、クリームシチュー、いちご' }}},
-  shion: { key:'shion', name_ja:'佐々木翔音', id:'@ShaunTheBunny', color:'#9b9b9b', avatar: getMemberAvatar('shion'), banner: getMemberBanner('shion'), profile: { description: 'L高 仙台サテライトの1年生。\n制服コーデが大好きで、自宅で動画配信をしている。\n些細なことで学校に行けない日も多く、部屋に引きこもりがち。\n配信では饒舌だが、人とうまくコミュニケーションが取れない部分も。\nかつて存在したスクールアイドルμ\'sの園田海未のファン。', details: { grade: '1年生', birthday: '11月11日', bloodType: '？', height: '？', hobby: 'SNS配信、読書、パズル、プラモデル', skill: 'バイオリン、ピアノ', likes: '完全食、フライドポテト、ラーメン、辛い物' }}}
-};
+const fallbackAuthors = processMemberData(fallbackMembersData);
 
 // 備用推文資料 - 從 post.json 載入
 const fallbackTweets = fallbackTweetsData;
