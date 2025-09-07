@@ -1,14 +1,17 @@
+/**
+ * 國際化配置檔案
+ * 使用 vue-i18n 管理應用程式中的多語言文本內容
+ */
+
 import { createI18n } from 'vue-i18n';
 import ja from './locales/ja.json';
 
-/**
- * 國際化配置
- * 使用 vue-i18n 管理應用程式中的文本內容
- */
+// 語言包配置
 const messages = {
-  ja
+  ja // 日文語言包
 };
 
+// 創建 i18n 實例
 const i18n = createI18n({
   locale: 'ja', // 預設語言設為日文
   fallbackLocale: 'ja', // 備用語言

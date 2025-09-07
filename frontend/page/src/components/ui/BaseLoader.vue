@@ -1,17 +1,25 @@
 <template>
+  <!-- 載入器組件 - 應用程式初始化時顯示 -->
   <div class="loader">
     <div class="loader-content">
-      <img src="/assets/images/logos/emblem.png" alt="Loading..." class="loader-image">
-        <div class="loader-dots">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
+      <!-- L高標誌 -->
+      <img src="/assets/images/logos/emblem.png" alt="載入中..." class="loader-image">
+      <!-- 動態載入點 -->
+      <div class="loader-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
     </div>  
   </div>
 </template>
 
 <script setup>
+/**
+ * 載入器組件
+ * 在應用程式資料載入完成前顯示的載入動畫
+ * 包含 L高標誌和動態載入點效果
+ */
 </script>
 
 <style scoped>

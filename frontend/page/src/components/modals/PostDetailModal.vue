@@ -20,43 +20,23 @@
               <span 
                 class="tweet-name clickable" 
                 @click.stop="filterByMember(ui.detailTweet.author_id)"
-                @mouseenter="showMemberTooltip = true"
-                @mouseleave="showMemberTooltip = false"
               >
                 {{ ui.detailTweet.name_ja }}@いきづらい部！
               </span>
               <span 
                 class="tweet-id clickable" 
                 @click.stop="filterByMember(ui.detailTweet.author_id)"
-                @mouseenter="showMemberTooltip = true"
-                @mouseleave="showMemberTooltip = false"
               >
                 {{ ui.detailTweet.twitter_id }}
               </span>
-              <!-- 成員篩選提示框 -->
-              <div 
-                v-if="showMemberTooltip" 
-                class="member-tooltip"
-              >
-                {{ t('member_filter_tooltip') }}
-              </div>
             </div>
             <div class="tweet-time-container">
               <span 
                 class="tweet-time" 
                 @click.stop="toggleTimeFormat"
-                @mouseenter="showTooltip = true"
-                @mouseleave="showTooltip = false"
               >
                 {{ displayTime }}
               </span>
-              <!-- 懸停提示框 -->
-              <div 
-                v-if="showTooltip" 
-                class="time-tooltip"
-              >
-                {{ formatTime(ui.detailTweet.created_at) }}
-              </div>
             </div>
           </div>
           <!-- 推文內容 -->
@@ -81,10 +61,6 @@ const emit = defineEmits(['closeModal', 'setMemberFilter', 'filterByMember']);
 
 // 日期格式狀態
 const showFullTime = ref(false);
-const showTooltip = ref(false);
-
-// 成員篩選提示框狀態
-const showMemberTooltip = ref(false);
 
 // 計算顯示的時間格式
 const displayTime = computed(() => {
@@ -218,8 +194,15 @@ const handleIdClick = (tweet) => {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  object-fit: cover;
   flex-shrink: 0;
+  transition: var(--transition-fast);
+  object-fit: cover;
+  object-position: center;
+  /* 改善圖片縮放品質 */
+  image-rendering: auto;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .tweet-body {
@@ -295,86 +278,14 @@ const handleIdClick = (tweet) => {
   text-decoration: underline;
 }
 
-/* 懸停提示框樣式 */
-.time-tooltip {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 8px;
-  padding: 6px 12px;
-  background-color: var(--bg-tooltip);
-  color: var(--text-tooltip);
-  border: 1px solid var(--border-tooltip);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  z-index: 1000;
-  box-shadow: var(--shadow-tooltip);
-  backdrop-filter: blur(8px);
-  animation: tooltip-fade-in 0.2s ease-out;
-}
-
-/* 提示框箭頭 */
-.time-tooltip::after {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-bottom-color: var(--bg-tooltip);
-}
-
-/* 提示框淡入動畫 */
-@keyframes tooltip-fade-in {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-/* 成員篩選提示框樣式 */
-.member-tooltip {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 8px;
-  padding: 6px 12px;
-  background-color: var(--bg-tooltip);
-  color: var(--text-tooltip);
-  border: 1px solid var(--border-tooltip);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  z-index: 1000;
-  box-shadow: var(--shadow-tooltip);
-  backdrop-filter: blur(8px);
-  animation: tooltip-fade-in 0.2s ease-out;
-}
-
-/* 成員篩選提示框箭頭 */
-.member-tooltip::after {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-bottom-color: var(--bg-tooltip);
-}
 
 .tweet-text {
-  color: var(--text-primary);
-  line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin-bottom: var(--spacing-unit);
 }
 
 .tweet-text :deep(.hashtag) {
@@ -440,7 +351,7 @@ const handleIdClick = (tweet) => {
   }
   
   .tweet-text {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 }
 </style>

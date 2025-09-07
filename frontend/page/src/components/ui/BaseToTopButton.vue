@@ -12,7 +12,12 @@
 </template>
 
 <script setup>
-// 這個組件接收一個名為 'show' 的 prop 來控制其顯示與否
+/**
+ * 回到頂部按鈕組件
+ * 當頁面滾動超過一定距離時顯示，點擊可平滑滾動回到頁面頂部
+ */
+
+// Props 定義
 defineProps({
   show: {
     type: Boolean,
@@ -20,7 +25,10 @@ defineProps({
   }
 });
 
-// 按鈕自己的點擊邏輯
+/**
+ * 滾動到頁面頂部
+ * 使用平滑滾動效果
+ */
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };

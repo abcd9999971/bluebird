@@ -6,9 +6,22 @@
 </template>
 
 <script setup>
-// 定義 props - 從父組件接收的資料
+/**
+ * Toast 通知組件
+ * 顯示操作結果的臨時通知訊息，支援成功、錯誤、警告等不同類型
+ */
+
+// Props 定義
 const props = defineProps({
-  toast: Object
+  toast: {
+    type: Object,
+    required: true,
+    default: () => ({
+      show: false,
+      message: '',
+      type: 'success'
+    })
+  }
 });
 </script>
 

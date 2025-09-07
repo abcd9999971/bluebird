@@ -2,7 +2,7 @@
   <!-- 推文列表 -->
   <div v-if="filteredTweets.length > 0" class="post-list-container">
     <!-- 直接渲染所有推文，採用保守的優化方式 -->
-    <PostItem 
+    <PostListItem 
       v-for="tweet in filteredTweets" 
       :key="tweet.id"
       :tweet="tweet"
@@ -26,7 +26,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import PostItem from './PostItem.vue';
+import PostListItem from './PostListItem.vue';
 
 // 定義 props - 從父組件接收的資料
 const props = defineProps({

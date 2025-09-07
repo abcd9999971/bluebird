@@ -19,43 +19,23 @@
           <span 
             class="tweet-name clickable" 
             @click.stop="filterByMember(tweet.author_id)"
-            @mouseenter="showMemberTooltip = true"
-            @mouseleave="showMemberTooltip = false"
           >
             {{ tweet.name_ja || authors[tweet.author_id]?.name_ja || tweet.author_id }}@いきづらい部！
           </span>
           <span 
             class="tweet-id clickable" 
             @click.stop="filterByMember(tweet.author_id)"
-            @mouseenter="showMemberTooltip = true"
-            @mouseleave="showMemberTooltip = false"
           >
             {{ tweet.twitter_id || authors[tweet.author_id]?.twitter_id || `@${tweet.author_id}` }}
           </span>
-          <!-- 成員篩選提示框 -->
-          <div 
-            v-if="showMemberTooltip" 
-            class="member-tooltip"
-          >
-            {{ t('member_filter_tooltip') }}
-          </div>
         </div>
         <div class="tweet-time-container">
           <span 
             class="tweet-time" 
             @click.stop="toggleTimeFormat"
-            @mouseenter="showTooltip = true"
-            @mouseleave="showTooltip = false"
           >
             {{ displayTime }}
           </span>
-          <!-- 懸停提示框 -->
-          <div 
-            v-if="showTooltip" 
-            class="time-tooltip"
-          >
-            {{ formatTime(tweet.created_at) }}
-          </div>
         </div>
       </div>
       
@@ -90,7 +70,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { formatTime, linkify } from '../../utils/formatters.js';
-import { useSwipeGestures } from '../../composables/useSwipeGestures.js';
 
 // 定義 props - 從父組件接收的資料
 const props = defineProps({
@@ -115,14 +94,8 @@ const emit = defineEmits([
 
 // 日期格式狀態
 const showFullTime = ref(false);
-const showTooltip = ref(false);
-
-// 成員篩選提示框狀態
-const showMemberTooltip = ref(false);
 
 
-// 滑動手勢
-const { addSwipeListeners } = useSwipeGestures();
 
 // 計算顯示的時間格式
 const displayTime = computed(() => {
@@ -137,6 +110,7 @@ const displayTime = computed(() => {
     }).format(date);
   }
 });
+
 
 // 事件處理函數 - 開啟推文詳情
 const openDetail = (tweet) => emit('openDetail', tweet);
@@ -170,35 +144,14 @@ const toggleTimeFormat = () => {
 
 
 
-// 滑動手勢回調
-const handleSwipeLeft = () => {
-  // 左滑點讚
-  toggleLike(props.tweet);
-};
-
-const handleSwipeRight = () => {
-  // 右滑分享
-  shareTweet(props.tweet);
-};
 
 // 生命週期管理
-let cleanupSwipeListeners = null;
-
 onMounted(() => {
-  // 為推文元素添加滑動手勢
-  const tweetElement = document.querySelector(`[data-tweet-id="${props.tweet.id}"]`);
-  if (tweetElement) {
-    cleanupSwipeListeners = addSwipeListeners(tweetElement, {
-      onSwipeLeft: handleSwipeLeft,
-      onSwipeRight: handleSwipeRight
-    });
-  }
+  // 組件掛載完成
 });
 
 onBeforeUnmount(() => {
-  if (cleanupSwipeListeners) {
-    cleanupSwipeListeners();
-  }
+  // 組件卸載清理
 });
 </script>
 
@@ -238,13 +191,16 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   transition: var(--transition-fast);
   object-fit: cover;
-  /* 保守的優化：圖片載入優化 */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+  object-position: center;
+  /* 改善圖片縮放品質 */
+  image-rendering: auto;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .tweet-avatar:hover {
-  transform: scale(1.08) rotate(2deg);
+  transform: translateZ(0) scale(1.08) rotate(2deg);
 }
 
 .tweet-body {
@@ -318,79 +274,6 @@ onBeforeUnmount(() => {
   text-decoration: underline;
 }
 
-/* 懸停提示框樣式 */
-.time-tooltip {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 8px;
-  padding: 6px 12px;
-  background-color: var(--bg-tooltip);
-  color: var(--text-tooltip);
-  border: 1px solid var(--border-tooltip);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  z-index: 1000;
-  box-shadow: var(--shadow-tooltip);
-  backdrop-filter: blur(8px);
-  animation: tooltip-fade-in 0.2s ease-out;
-}
-
-/* 提示框箭頭 */
-.time-tooltip::after {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-bottom-color: var(--bg-tooltip);
-}
-
-/* 提示框淡入動畫 */
-@keyframes tooltip-fade-in {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-/* 成員篩選提示框樣式 */
-.member-tooltip {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 8px;
-  padding: 6px 12px;
-  background-color: var(--bg-tooltip);
-  color: var(--text-tooltip);
-  border: 1px solid var(--border-tooltip);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  z-index: 1000;
-  box-shadow: var(--shadow-tooltip);
-  backdrop-filter: blur(8px);
-  animation: tooltip-fade-in 0.2s ease-out;
-}
-
-/* 成員篩選提示框箭頭 */
-.member-tooltip::after {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-bottom-color: var(--bg-tooltip);
-}
 
 .tweet-text {
   white-space: pre-wrap;

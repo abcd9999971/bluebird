@@ -157,6 +157,7 @@ const getTwitterUrl = (twitterId) => {
   right: calc(var(--spacing-unit) * 3);
   display: flex;
   gap: var(--spacing-unit);
+  z-index: 15;
 }
 
 /* 成員名稱和 ID 容器 - 使用 Flexbox 水平排列 */
@@ -164,10 +165,11 @@ const getTwitterUrl = (twitterId) => {
   position: absolute;
   top: 240px;
   left: 170px;
-  z-index: 10;
+  z-index: 12;
   display: flex;
   align-items: center;
   gap: calc(var(--spacing-unit) * 0.5);
+  max-width: calc(100% - 200px);
 }
 
 /* 成員名稱 - 主要標題樣式 */
@@ -206,16 +208,17 @@ const getTwitterUrl = (twitterId) => {
   transform: translateX(-50%);
   margin-top: 8px;
   padding: 6px 12px;
-  background-color: var(--bg-tooltip);
-  color: var(--text-tooltip);
-  border: 1px solid var(--border-tooltip);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   font-size: 0.85rem;
   white-space: nowrap;
-  z-index: 1000;
-  box-shadow: var(--shadow-tooltip);
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(8px);
   animation: tooltip-fade-in 0.2s ease-out;
+  pointer-events: none;
 }
 
 /* 提示框箭頭 */
@@ -226,7 +229,7 @@ const getTwitterUrl = (twitterId) => {
   left: 50%;
   transform: translateX(-50%);
   border: 5px solid transparent;
-  border-bottom-color: var(--bg-tooltip);
+  border-bottom-color: rgba(0, 0, 0, 0.8);
 }
 
 /* 提示框淡入動畫 */

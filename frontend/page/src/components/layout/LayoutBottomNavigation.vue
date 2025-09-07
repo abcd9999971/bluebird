@@ -34,7 +34,7 @@
     <!-- 日期導航按鈕 -->
     <button 
       class="nav-item" 
-      @click="openDateNavModal"
+      @click="openDateNavigationModal"
     >
       <span class="nav-icon">calendar_month</span>
       <span class="nav-label">{{ t('date_navigation') }}</span>
@@ -63,7 +63,7 @@ const emit = defineEmits([
   'resetFilters',
   'focusSearch',
   'toggleLikedFilter',
-  'openDateNavModal',
+  'openDateNavigationModal',
   'toggleTheme'
 ]);
 
@@ -85,7 +85,7 @@ const t = (key) => {
 const resetFilters = () => emit('resetFilters');
 const focusSearch = () => emit('focusSearch');
 const toggleLikedFilter = () => emit('toggleLikedFilter');
-const openDateNavModal = () => emit('openDateNavModal');
+const openDateNavigationModal = () => emit('openDateNavigationModal');
 const toggleTheme = () => emit('toggleTheme');
 </script>
 

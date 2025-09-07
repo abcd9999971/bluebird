@@ -52,9 +52,7 @@ npm run dev
 ### 🎨 用戶體驗
 - **主題切換**：支援明暗主題切換
 - **推文互動**：點讚、分享功能
-- **滑動手勢**：左滑點讚，右滑分享
 - **下拉刷新**：手機版下拉刷新推文
-- **鍵盤快捷鍵**：J/K 上下瀏覽，L 點讚，R 分享，Esc 關閉
 
 ### 📱 手機版特色
 - **手機版導航**：專為手機設計的橫向滾動導航
@@ -65,7 +63,7 @@ npm run dev
 ### ⚡ 性能優化
 - **保守性能優化**：採用CSS硬體加速和圖片預載入，確保所有推文都能正常載入
 - **智能時間軸分組**：基於節點壅擠度自動切換月份顯示模式，避免時間軸過於擁擠
-- **組件架構優化**：清理未使用的組件，確保所有組件都在正確的目錄結構中
+- **組件架構優化**：清理未使用的組件，細分功能組件，提升可重用性和可維護性
 
 ## 🏗️ 技術架構
 
@@ -104,62 +102,81 @@ npm run dev
 App.vue (根組件)
 ├── 佈局組件層 (Layout Components)
 │   ├── AppLayout.vue (統一佈局包裝)
-│   ├── LeftSidebar.vue
-│   ├── PostsHeader.vue  
-│   ├── MobileNav.vue
-│   ├── RightSidebar.vue
-│   └── BottomNavigation.vue
-├── 業務組件層 (Business Components)
-│   ├── MemberHeader.vue
-│   ├── PostList.vue
-│   └── PostItem.vue
+│   ├── LayoutLeftSidebar.vue
+│   ├── LayoutPostsHeader.vue  
+│   ├── LayoutMobileNavigation.vue
+│   ├── LayoutRightSidebar.vue
+│   └── LayoutBottomNavigation.vue
+├── 視圖組件層 (View Components)
+│   └── TimelineView.vue (時間軸視圖)
+├── 容器組件層 (Container Components)
+│   ├── GlobalComponents.vue (全域組件容器)
+│   └── AppLogic.vue (應用程式邏輯容器)
+├── 推文組件層 (Post Components)
+│   ├── PostMemberHeader.vue
+│   ├── PostListContainer.vue
+│   └── PostListItem.vue
 ├── 彈窗組件層 (Modal Components)
 │   ├── PostDetailModal.vue
 │   ├── ProfileModal.vue
-│   └── DateNavModal.vue
-└── UI組件層 (UI Components)
-    ├── Loader.vue
-    ├── ToTopButton.vue
-    ├── ToastNotification.vue
-    ├── TimelineBar.vue
-    ├── PullRefreshIndicator.vue
-    └── BirthdayReminder.vue
+│   └── DateNavigationModal.vue
+├── UI組件層 (UI Components)
+│   ├── BaseLoader.vue
+│   ├── BaseToTopButton.vue
+│   ├── BaseToastNotification.vue
+│   ├── BaseTimelineBar.vue
+│   ├── BasePullRefreshIndicator.vue
+│   └── BaseBirthdayReminder.vue
+└── 功能組件層 (Feature Components)
+    ├── BaseSearchFeature.vue
+    ├── BaseFilterFeature.vue
+    └── BaseNavigationFeature.vue
 ```
 
 ### 組件分類詳解
 
 #### 佈局組件 (Layout Components)
-- **AppLayout.vue** - 統一佈局包裝組件，整合所有佈局相關組件
-- **LeftSidebar.vue** - 左側邊欄，包含主導航、搜尋、成員篩選、主題切換
-- **PostsHeader.vue** - 推文區標題列，簡化版標題顯示
-- **MobileNav.vue** - 手機版橫向滾動導航，成員頭像選擇
-- **RightSidebar.vue** - 右側邊欄，日期導航器和年月篩選
-- **BottomNavigation.vue** - 底部導航欄，手機版快速導航
+- **AppLayout.vue** - 統一佈局包裝，管理整體應用程式佈局結構
+- **LayoutLeftSidebar.vue** - 左側邊欄，包含主導航、搜尋、成員篩選、主題切換
+- **LayoutPostsHeader.vue** - 推文區標題列，簡化版標題顯示
+- **LayoutMobileNavigation.vue** - 手機版橫向滾動導航，成員頭像選擇
+- **LayoutRightSidebar.vue** - 右側邊欄，日期導航器和年月篩選
+- **LayoutBottomNavigation.vue** - 底部導航欄，手機版快速導航
+
+#### 視圖組件 (View Components)
+- **TimelineView.vue** - 時間軸視圖，整合所有時間軸相關組件和功能
+
+#### 容器組件 (Container Components)
+- **GlobalComponents.vue** - 全域組件容器，統一管理彈窗、通知、導航等全域組件
+- **AppLogic.vue** - 應用程式邏輯容器，集中管理所有業務邏輯、狀態和事件處理
 
 #### 推文組件 (Post Components)
-- **MemberHeader.vue** - 成員橫幅，顯示選擇成員的頭像、名稱、自我介紹按鈕
-- **PostList.vue** - 推文列表容器，管理推文項目和空狀態
-- **PostItem.vue** - 單個推文項目，包含頭像、內容、互動按鈕，支援點擊成員名稱篩選
+- **PostMemberHeader.vue** - 成員橫幅，顯示選擇成員的頭像、名稱、自我介紹按鈕
+- **PostListContainer.vue** - 推文列表容器，管理推文項目和空狀態
+- **PostListItem.vue** - 單個推文項目，包含頭像、內容、互動按鈕，支援點擊成員名稱篩選
 
 #### 彈窗組件 (Modal Components)
 - **PostDetailModal.vue** - 推文詳情彈窗，顯示完整推文內容
 - **ProfileModal.vue** - 個人資料彈窗，顯示成員詳細資訊
-- **DateNavModal.vue** - 手機版日期導航彈窗，年月日期選擇
+- **DateNavigationModal.vue** - 手機版日期導航彈窗，年月日期選擇
 
 #### UI組件 (UI Components)
-- **Loader.vue** - 載入動畫，資料載入時顯示
-- **ToTopButton.vue** - 回到頂部按鈕，長頁面滾動輔助
-- **ToastNotification.vue** - Toast 通知，操作結果提示
-- **TimelineBar.vue** - 時間軸裝飾組件，視覺化推文分佈，智能月份分組避免節點壅擠
-- **PullRefreshIndicator.vue** - 下拉刷新指示器，手機版刷新功能
-- **BirthdayReminder.vue** - 生日提醒，成員生日時顯示
+- **BaseLoader.vue** - 載入動畫，資料載入時顯示
+- **BaseToTopButton.vue** - 回到頂部按鈕，長頁面滾動輔助
+- **BaseToastNotification.vue** - Toast 通知，操作結果提示
+- **BaseTimelineBar.vue** - 時間軸裝飾組件，視覺化推文分佈，智能月份分組避免節點壅擠
+- **BasePullRefreshIndicator.vue** - 下拉刷新指示器，手機版刷新功能
+- **BaseBirthdayReminder.vue** - 生日提醒，成員生日時顯示
+
+#### 功能組件 (Feature Components)
+- **BaseSearchFeature.vue** - 統一搜尋功能組件，整合桌面版和手機版搜尋邏輯
+- **BaseFilterFeature.vue** - 篩選功能組件，包含成員篩選和喜歡篩選
+- **BaseNavigationFeature.vue** - 導航功能組件，包含主題切換、重置篩選、日期導航
 
 ### Composables 組合式函數
 - **useApi.js** - API 請求管理，統一處理所有後端通訊
 - **useAppState.js** - 應用程式狀態管理，集中管理全域狀態
 - **useImageLoader.js** - 圖片載入管理，優化圖片載入效能
-- **useKeyboardShortcuts.js** - 鍵盤快捷鍵管理，支援 J/K/L/R/Esc 等操作
-- **useSwipeGestures.js** - 滑動手勢管理，支援左滑點讚、右滑分享
 - **usePullRefresh.js** - 下拉刷新管理，手機版刷新功能
 
 ### 組件間通信機制
@@ -190,9 +207,44 @@ useAppState (全域狀態中心)
     └── 品牌顏色 (brandColor)
 ```
 
-### 頁面視圖組件
-- **PostDetailView.vue** - 推文詳情頁面，獨立頁面顯示推文內容，包含返回按鈕和完整互動功能
-- **TimelineView.vue** - 時間軸頁面，專用的時間軸視圖，整合所有推文相關組件和功能
+### 組件架構設計
+
+#### 分層架構設計
+- **App.vue**：根組件，專注於組件協調和 UI 結構
+- **AppLogic.vue**：邏輯容器，集中管理所有業務邏輯和狀態
+- **AppLayout.vue**：統一佈局管理，簡化 App.vue 複雜度
+- **TimelineView.vue**：時間軸視圖整合，集中時間軸相關功能
+- **GlobalComponents.vue**：全域組件容器，統一管理彈窗和通知
+- **功能組件**：BaseSearchFeature、BaseFilterFeature、BaseNavigationFeature 提供可重用功能
+
+#### 架構優勢
+- **職責分離**：每個組件層級職責明確，便於維護
+- **邏輯與 UI 分離**：業務邏輯集中在 AppLogic.vue，UI 結構在 App.vue
+- **可重用性**：功能組件和視圖組件可在不同場景中重用
+- **響應式設計**：所有組件自動適配桌面版和手機版
+- **易於測試**：邏輯與 UI 分離，便於單元測試和整合測試
+
+#### 組件協調機制
+
+**App.vue 設計理念：**
+- 專注於組件協調和 UI 結構
+- 組件間的資料傳遞
+- 事件通信協調
+- 載入狀態管理
+
+**AppLogic.vue 設計理念：**
+- 集中管理所有業務邏輯
+- 狀態管理（使用 Composables）
+- 事件處理方法
+- 生命週期管理
+- 狀態監聽器
+- 工具函數
+
+**維護優勢：**
+- **邏輯集中**：所有業務邏輯在 AppLogic.vue 中，便於維護
+- **UI 清晰**：App.vue 專注於 UI 結構，代碼更清晰
+- **測試友好**：邏輯與 UI 分離，便於單元測試
+- **擴展性強**：新增功能時邏輯在 AppLogic.vue，UI 在對應組件
 
 ### 組件開發指南
 
@@ -204,19 +256,72 @@ useAppState (全域狀態中心)
 5. **樣式隔離**：使用 `scoped` 樣式避免樣式污染
 
 #### 組件命名規範
-- **佈局組件**：描述其佈局功能（如 `LeftSidebar`、`BottomNavigation`）
-- **業務組件**：描述其業務功能（如 `PostItem`、`MemberHeader`）
-- **UI組件**：描述其UI功能（如 `Loader`、`ToastNotification`）
-- **彈窗組件**：以 `Modal` 結尾（如 `PostDetailModal`）
+
+本專案遵循 Vue.js 社群公認的命名最佳實踐，使用完整單詞而非縮寫，確保名稱清晰且具描述性：
+
+**檔案命名規範：**
+- **Vue組件檔案**：使用 **PascalCase**（大駝峰命名法）
+- **JavaScript工具檔案**：使用 **kebab-case**（短橫線命名法）
+- **Composables檔案**：以 `use` 前綴 + **camelCase**
+
+**組件分類命名：**
+- **基礎組件**：以 `Base` 前綴命名（如 `BaseLoader`、`BaseToastNotification`）
+- **佈局組件**：以 `Layout` 前綴命名（如 `LayoutLeftSidebar`、`LayoutBottomNavigation`）
+- **推文組件**：以 `Post` 前綴 + 功能描述（如 `PostListItem`、`PostMemberHeader`）
+- **彈窗組件**：以 `Modal` 後綴命名（如 `PostDetailModal`、`DateNavigationModal`）
+- **功能組件**：以 `Base` 前綴 + 功能描述（如 `BaseSearchFeature`、`BaseFilterFeature`）
+
+**命名範例：**
+```
+components/
+├── ui/
+│   ├── BaseLoader.vue           # 基礎載入器
+│   ├── BaseToastNotification.vue # 基礎通知組件
+│   └── BaseTimelineBar.vue      # 基礎時間軸裝飾組件
+├── layout/
+│   ├── LayoutLeftSidebar.vue    # 左側邊欄佈局
+│   ├── LayoutRightSidebar.vue   # 右側邊欄佈局
+│   ├── LayoutMobileNavigation.vue # 手機版導航佈局
+│   └── LayoutBottomNavigation.vue # 底部導航佈局
+├── posts/
+│   ├── PostMemberHeader.vue     # 推文成員標題
+│   ├── PostListContainer.vue    # 推文列表容器
+│   └── PostListItem.vue         # 推文列表項目
+├── features/
+│   ├── BaseSearchFeature.vue    # 基礎搜尋功能
+│   └── BaseFilterFeature.vue    # 基礎篩選功能
+└── modals/
+    ├── PostDetailModal.vue      # 推文詳情彈窗
+    ├── ProfileModal.vue         # 個人資料彈窗
+    └── DateNavigationModal.vue  # 日期導航彈窗
+```
+
+**JavaScript檔案命名範例：**
+```
+utils/
+├── assets.js                    # 資源管理
+├── constants.js                 # 常數定義
+├── formatters.js                # 格式化工具
+└── html2canvas-helper.js        # 圖片生成工具
+
+composables/
+├── useApi.js                    # API請求管理
+├── useAppState.js               # 應用程式狀態管理
+├── useImageLoader.js            # 圖片載入管理
+└── usePullRefresh.js            # 下拉刷新管理
+```
 
 #### 組件目錄結構
 ```
 components/
 ├── index.js           # 統一導出文件
 ├── layout/            # 佈局相關組件
+├── views/             # 視圖組件
+├── containers/        # 容器組件
 ├── modals/            # 彈窗組件
 ├── posts/             # 推文相關業務組件
-└── ui/                # 通用UI組件
+├── ui/                # 通用UI組件
+└── features/          # 功能組件
 ```
 
 ## 📁 專案結構
@@ -237,36 +342,40 @@ bluebird-master/
 │       │   │   ├── index.js    # 組件統一導出
 │       │   │   ├── layout/     # 佈局組件
 │       │   │   │   ├── AppLayout.vue      # 統一佈局包裝
-│       │   │   │   ├── LeftSidebar.vue    # 左側邊欄
-│       │   │   │   ├── PostsHeader.vue    # 推文標題列
-│       │   │   │   ├── MobileNav.vue      # 手機版導航
-│       │   │   │   ├── RightSidebar.vue   # 右側邊欄
-│       │   │   │   └── BottomNavigation.vue # 底部導航欄
+│       │   │   │   ├── LayoutLeftSidebar.vue    # 左側邊欄
+│       │   │   │   ├── LayoutPostsHeader.vue    # 推文標題列
+│       │   │   │   ├── LayoutMobileNavigation.vue      # 手機版導航
+│       │   │   │   ├── LayoutRightSidebar.vue   # 右側邊欄
+│       │   │   │   └── LayoutBottomNavigation.vue # 底部導航欄
+│       │   │   ├── views/      # 視圖組件
+│       │   │   │   └── TimelineView.vue   # 時間軸視圖
+│       │   │   ├── containers/ # 容器組件
+│       │   │   │   ├── GlobalComponents.vue # 全域組件容器
+│       │   │   │   └── AppLogic.vue # 應用程式邏輯容器
 │       │   │   ├── posts/      # 推文相關組件
-│       │   │   │   ├── MemberHeader.vue   # 成員橫幅
-│       │   │   │   ├── PostList.vue       # 推文列表
-│       │   │   │   └── PostItem.vue       # 推文項目
+│       │   │   │   ├── PostMemberHeader.vue   # 成員橫幅
+│       │   │   │   ├── PostListContainer.vue       # 推文列表
+│       │   │   │   └── PostListItem.vue       # 推文項目
 │       │   │   ├── modals/     # 彈窗組件
 │       │   │   │   ├── PostDetailModal.vue  # 推文詳情彈窗
 │       │   │   │   ├── ProfileModal.vue     # 個人資料彈窗
-│       │   │   │   └── DateNavModal.vue     # 日期導航彈窗
-│       │   │   └── ui/         # UI 通用組件
-│       │   │       ├── Loader.vue           # 載入器
-│       │   │       ├── ToTopButton.vue      # 回到頂部按鈕
-│       │   │       ├── ToastNotification.vue # Toast 通知
-│       │   │       ├── TimelineBar.vue      # 時間軸裝飾組件
-│       │   │       ├── PullRefreshIndicator.vue # 下拉刷新指示器
-│       │   │       └── BirthdayReminder.vue # 生日提醒
+│       │   │   │   └── DateNavigationModal.vue     # 日期導航彈窗
+│       │   │   ├── ui/         # UI 通用組件
+│       │   │   │   ├── BaseLoader.vue           # 載入器
+│       │   │   │   ├── BaseToTopButton.vue      # 回到頂部按鈕
+│       │   │   │   ├── BaseToastNotification.vue # Toast 通知
+│       │   │   │   ├── BaseTimelineBar.vue      # 時間軸裝飾組件
+│       │   │   │   ├── BasePullRefreshIndicator.vue # 下拉刷新指示器
+│       │   │   │   └── BaseBirthdayReminder.vue # 生日提醒
+│       │   │   └── features/   # 功能組件
+│       │   │       ├── BaseSearchFeature.vue    # 搜尋功能組件
+│       │   │       ├── BaseFilterFeature.vue    # 篩選功能組件
+│       │   │       └── BaseNavigationFeature.vue # 導航功能組件
 │       │   ├── composables/    # Vue 3 Composition API 組合式函數
 │       │   │   ├── useApi.js   # API 請求管理
 │       │   │   ├── useAppState.js # 應用程式狀態管理
 │       │   │   ├── useImageLoader.js # 圖片載入管理
-│       │   │   ├── useKeyboardShortcuts.js # 鍵盤快捷鍵管理
-│       │   │   ├── useSwipeGestures.js # 滑動手勢管理
 │       │   │   └── usePullRefresh.js # 下拉刷新管理
-│       │   ├── views/          # 頁面視圖組件
-│       │   │   ├── PostDetailView.vue # 推文詳情頁面
-│       │   │   └── TimelineView.vue   # 時間軸頁面
 │       │   ├── utils/          # 工具函數
 │       │   │   ├── assets.js   # 資源管理
 │       │   │   ├── constants.js # 常數定義
@@ -340,7 +449,7 @@ bluebird-master/
 - **圖片渲染優化**：使用image-rendering屬性優化圖片顯示品質
 - **簡化架構**：採用直接渲染確保穩定性，移除複雜的虛擬滾動機制
 - **智能時間軸分組**：基於節點壅擠度自動切換月份顯示模式，避免時間軸過於擁擠
-- **組件架構優化**：清理未使用的組件，確保所有組件都在正確的目錄結構中
+- **組件架構優化**：清理未使用的組件，細分功能組件，提升可重用性和可維護性
 
 ### 自定義樣式
 所有樣式都在 `frontend/page/src/assets/styles.css` 中定義，使用CSS變數系統。
