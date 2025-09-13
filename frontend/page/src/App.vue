@@ -157,7 +157,7 @@ import { ref, onMounted } from 'vue';
 // === 組件引入 ===
 import BaseLoader from './components/ui/BaseLoader.vue';
 import AppLayout from './components/layout/AppLayout.vue';
-import TimelineView from './components/views/TimelineView.vue';
+import TimelineView from './views/TimelineView.vue';
 import GlobalComponents from './components/containers/GlobalComponents.vue';
 import AppLogic from './components/containers/AppLogic.vue';
 

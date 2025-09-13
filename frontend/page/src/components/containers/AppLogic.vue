@@ -11,8 +11,8 @@ import { useImageLoader } from '../../composables/useImageLoader.js';
 import { usePullRefresh } from '../../composables/usePullRefresh.js';
 import { shareTweetAsImage } from '../../utils/html2canvas-helper.js';
 import { processMemberData } from '../../utils/assets.js';
-import fallbackTweetsData from '../../post.json';
-import fallbackMembersData from '../../member.json';
+import fallbackTweetsData from '../../data/post.json';
+import fallbackMembersData from '../../data/member.json';
 
 /**
  * 應用程式邏輯管理組件

@@ -73,10 +73,10 @@ import { ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 // 組件引入
-import LayoutPostsHeader from '../layout/LayoutPostsHeader.vue';
-import LayoutMobileNavigation from '../layout/LayoutMobileNavigation.vue';
-import PostMemberHeader from '../posts/PostMemberHeader.vue';
-import PostListContainer from '../posts/PostListContainer.vue';
+import LayoutPostsHeader from '../components/layout/LayoutPostsHeader.vue';
+import LayoutMobileNavigation from '../components/layout/LayoutMobileNavigation.vue';
+import PostMemberHeader from '../components/posts/PostMemberHeader.vue';
+import PostListContainer from '../components/posts/PostListContainer.vue';
 
 /**
  * 時間軸視圖組件
