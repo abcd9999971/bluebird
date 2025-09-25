@@ -13,7 +13,7 @@ module.exports = {
   },
   plugins: ['prettier'],
   rules: {
-    'indent': 'error, tab',
+    'indent': ['error', 'tab'],
     'no-under': 'off',
     'prettier/prettier': 'error'
   }
