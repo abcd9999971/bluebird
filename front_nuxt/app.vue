@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<UiLoader />
+		<UiBaseLoader />
 	</div>
 </template>
 
