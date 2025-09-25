@@ -1,20 +1,17 @@
 module.exports = {
-  env: {
-    browser: true,
-    es2023: true
-  },
-  extends: [
-    '@nuxtjs/eslint-config-typescript',
-    'prettier' 
-  ],
-  parserOptions: {
-    ecmaVersion: 2023,
-    sourceType: 'module'
-  },
-  plugins: ['prettier'],
-  rules: {
-    'indent': ['error', 'tab'],
-    'no-under': 'off',
-    'prettier/prettier': 'error'
-  }
+	env: {
+		browser: true,
+		es2023: true
+	},
+	extends: ['@nuxtjs/eslint-config-typescript', 'prettier'],
+	parserOptions: {
+		ecmaVersion: 2023,
+		sourceType: 'module'
+	},
+	plugins: ['prettier'],
+	rules: {
+		indent: ['error', 'tab'],
+		'no-under': 'off',
+		'prettier/prettier': 'error'
+	}
 }
