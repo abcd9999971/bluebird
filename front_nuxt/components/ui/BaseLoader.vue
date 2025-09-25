@@ -3,7 +3,7 @@
 		<div class="loader-content">
 			<!-- Spinner -->
 			<img src="../../public/logos/emblem.png" alt="Loading..." class="loader-logo h-20 w-20" />
-			<div class="dots-container mx-auto w-fit mt-2">
+			<div class="dots-container mx-auto mt-2 w-fit">
 				<div class="dot bg-blue-500 dark:bg-blue-400"></div>
 				<div class="dot bg-blue-500 dark:bg-blue-400"></div>
 				<div class="dot bg-blue-500 dark:bg-blue-400"></div>
