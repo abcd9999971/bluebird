@@ -327,7 +327,8 @@ const findMember = (authorId) => {
 const quoteAvatar = computed(() => {
   if (!props.tweet.quote_id) return '';
   const member = findMember(props.tweet.quote_author_id);
-  return member ? member.avatar_url : null;
+  // 優先使用成員頭像，否則使用 tweet.quote_avatar（已經移除 _mini）
+  return member ? member.avatar_url : props.tweet.quote_avatar;
 });
 
 // 引用推文的作者顯示名稱

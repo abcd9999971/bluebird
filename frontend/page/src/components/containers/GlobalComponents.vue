@@ -6,6 +6,7 @@
     <!-- 推文詳情彈窗 -->
     <PostDetailModal 
       :ui="ui"
+      :authors="authors"
       @closeModal="closeAllModals"
     />
 

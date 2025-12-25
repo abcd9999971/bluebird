@@ -23,7 +23,7 @@
                     class="tweet-name clickable" 
                     @click.stop="filterByMember(ui.detailTweet.author_id)"
                   >
-                    {{ ui.detailTweet.name_ja }}@いきづらい部！
+                    {{ displayName }}
                   </span>
                   <span 
                     class="tweet-id clickable" 
@@ -70,7 +70,8 @@ import { ref, computed } from 'vue';
 // 定義 props - 從父組件接收的資料
 const props = defineProps({
   ui: Object,
-  filters: Object
+  filters: Object,
+  authors: Object
 });
 
 // 定義 emits - 向父組件發送的事件
@@ -78,6 +79,26 @@ const emit = defineEmits(['closeModal', 'setMemberFilter', 'filterByMember']);
 
 // 日期格式狀態
 const showFullTime = ref(false);
+
+// 檢查是否包含特定 hashtag
+const hasProjectTag = computed(() => {
+  return props.ui.detailTweet?.content && props.ui.detailTweet.content.includes('#いきづらい部');
+});
+
+// 檢查作者是否為成員
+const isMember = computed(() => {
+  if (!props.ui.detailTweet?.author_id || !props.authors) return false;
+  return !!props.authors[props.ui.detailTweet.author_id];
+});
+
+// 顯示名稱：只有成員且包含 hashtag 時才顯示後綴
+const displayName = computed(() => {
+  const baseName = props.ui.detailTweet?.name_ja || '';
+  if (isMember.value && hasProjectTag.value) {
+    return `${baseName}@いきづらい部！`;
+  }
+  return baseName;
+});
 
 // 計算顯示的時間格式
 const displayTime = computed(() => {

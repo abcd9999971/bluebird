@@ -356,6 +356,9 @@ class NitterScraper:
                     avatar_src = quote_avatar_img['src']
                     if avatar_src.startswith('/pic/'):
                         avatar_src = nitter_url + avatar_src
+                    # 移除 _mini 以獲取 400x400 完整解析度圖片（僅適用於 Twitter 個人資料圖片）
+                    if '_mini' in avatar_src:
+                        avatar_src = avatar_src.replace('_mini', '')
                     quote_data['quote_avatar'] = avatar_src
                 
                 # 5. 取得引用推文中的圖片
