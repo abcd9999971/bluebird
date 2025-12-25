@@ -10,13 +10,13 @@
  */
 export function formatTime(dateInput) {
   const date = new Date(dateInput);
-  return new Intl.DateTimeFormat('ja-JP', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric', 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    hour12: false 
+  return new Intl.DateTimeFormat('ja-JP', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
   }).format(date);
 }
 
@@ -27,9 +27,9 @@ export function formatTime(dateInput) {
  */
 export function formatDateForScroller(dateInput) {
   const date = new Date(dateInput);
-  return new Intl.DateTimeFormat('ja-JP', { 
-    month: 'long', 
-    day: 'numeric' 
+  return new Intl.DateTimeFormat('ja-JP', {
+    month: 'long',
+    day: 'numeric'
   }).format(date);
 }
 
@@ -40,17 +40,18 @@ export function formatDateForScroller(dateInput) {
  */
 export function linkify(text, searchTerm = '') {
   if (!text) return '';
-  
-  let processedText = text;
-  
+
+  // 先將換行符轉換為 <br>
+  let processedText = text.replace(/\n/g, '<br>');
+
   // 如果有搜尋關鍵字，先高亮顯示
   if (searchTerm && searchTerm.trim()) {
     const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     processedText = processedText.replace(regex, '<mark class="search-highlight">$1</mark>');
   }
-  
+
   // 處理 hashtag
-  return processedText.replace(/#([\w\u3000-\u9fff\u3040-\u30ff\uff00-\uffef!-]+)/g, 
+  return processedText.replace(/#([\w\u3000-\u9fff\u3040-\u30ff\uff00-\uffef!-]+)/g,
     '<a href="#" class="hashtag">#$1</a>'
   );
 }
@@ -105,7 +106,7 @@ export function formatRelativeTime(dateInput) {
   const date = new Date(dateInput);
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
-  
+
   if (diffInSeconds < 60) {
     return '剛剛';
   } else if (diffInSeconds < 3600) {

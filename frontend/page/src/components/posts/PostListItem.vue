@@ -10,6 +10,7 @@
       :src="tweet.avatar_url || authors[tweet.author_id]?.avatar_url || ''" 
       :alt="tweet.name_ja || authors[tweet.author_id]?.name_ja || tweet.author_id" 
       class="tweet-avatar"
+      @error="(e) => e.target.src = authors[tweet.author_id]?.avatar_url || ''"
     />
     
     <div class="tweet-body">
@@ -40,16 +41,17 @@
       </div>
       
       <!-- 推文內容 -->
-      <div class="tweet-text" v-html="linkify(tweet.content, searchTerm)" @click="handleTweetTextClick"></div>
+      <div class="tweet-text" v-html="linkify(tweet.content, searchTerm)" @click.stop="handleTweetTextClick"></div>
       
       <!-- 推文媒體（如果有圖片） -->
-      <div v-if="tweet.image_url || tweet.media_urls" class="tweet-media">
+      <div v-if="tweet.image_url || tweet.media_urls" class="tweet-media" @click.stop>
         <img 
           :src="tweet.image_url || tweet.media_urls" 
           :alt="'推文圖片'"
           class="tweet-image"
           loading="lazy"
           @click.stop="openMediaPreview"
+          @error="(e) => e.target.closest('.tweet-media').style.display = 'none'"
         />
         <div v-if="tweet.media_type" class="media-badge">
           <span class="icon">{{ tweet.media_type === 'photo' ? 'image' : 'play_circle' }}</span>
@@ -362,6 +364,7 @@ onBeforeUnmount(() => {
 }
 
 .media-badge .icon {
+  font-family: 'Material Symbols Outlined';
   font-size: 18px;
 }
 

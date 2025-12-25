@@ -17,7 +17,7 @@ const props = defineProps({
 .timeline-header {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 1000;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-primary);
   padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);

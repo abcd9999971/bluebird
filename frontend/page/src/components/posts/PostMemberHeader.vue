@@ -148,7 +148,8 @@ const getTwitterUrl = (twitterId) => {
   top: 165px;
   left: calc(var(--spacing-unit) * 3);
   object-fit: cover;
-  z-index: 10;
+  z-index: 20;
+  background-color: var(--bg-secondary);
 }
 
 .member-meta-top {
@@ -163,9 +164,9 @@ const getTwitterUrl = (twitterId) => {
 /* 成員名稱和 ID 容器 - 使用 Flexbox 水平排列 */
 .member-name-container {
   position: absolute;
-  top: 240px;
-  left: 170px;
-  z-index: 12;
+  top: 245px; /* 從 240px 移到 245px */
+  left: 180px; /* 從 170px 移到 180px，增加與頭像的間距 */
+  z-index: 15;
   display: flex;
   align-items: center;
   gap: calc(var(--spacing-unit) * 0.5);

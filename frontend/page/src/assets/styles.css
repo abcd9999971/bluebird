@@ -414,7 +414,7 @@ button {
 .timeline-header { 
   position: sticky; 
   top: 0; 
-  z-index: 10; 
+  z-index: 100; /* 提高 z-index 確保在所有滾動內容之上 */
   background-color: var(--bg-secondary); 
   border-bottom: 1px solid var(--border-primary); 
   padding: var(--spacing-unit) calc(var(--spacing-unit) * 2); 
@@ -1146,7 +1146,7 @@ html[data-member-theme="true"] .profile-btn:hover {
     top: calc(clamp(60px, 25vw, 230px) - 40px) !important; /* 橫幅底部往上40px */
     left: 16px !important; 
     object-fit: cover !important;
-    z-index: 5 !important; /* 確保不會壓過 mobile-nav */
+    z-index: 5 !important; 
   }
   
   /* 成員資訊區域 - 在頭貼右側，完全在 member-header 背景中 */
@@ -1161,8 +1161,8 @@ html[data-member-theme="true"] .profile-btn:hover {
   /* 成員名稱和 ID 容器 - 手機版使用水平排列 */
   .member-name-container {
     position: absolute !important;
-    top: calc(clamp(60px, 25vw, 230px) + 10px) !important; /* 橫幅下方10px */
-    left: 108px !important; /* 配合更大的頭貼調整位置 */
+    top: calc(clamp(60px, 25vw, 230px) + 20px) !important; /* 從 10px 移到 20px，避開頭像垂直重疊 */
+    left: 112px !important; /* 稍微再往右一點 */
     display: flex !important;
     align-items: center !important;
     gap: calc(var(--spacing-unit) * 0.5) !important;

@@ -1,63 +1,67 @@
 <template>
   <!-- 推文詳情彈窗 -->
-  <div v-if="ui.detail" class="modal" :class="{ show: ui.detail }">
-    <div class="modal-header">
-      <h3>{{ t('tweet_detail_header') }}</h3>
-      <button class="modal-close-btn" @click="closeModal">&times;</button>
-    </div>
-    <div class="modal-content">
-      <article v-if="ui.detailTweet" class="tweet">
-        <!-- 推文頭像 -->
-        <img 
-          :src="ui.detailTweet.avatar_url" 
-          :alt="ui.detailTweet.name_ja" 
-          class="tweet-avatar"
-        >
-        <div class="tweet-body">
-          <!-- 推文標題行 -->
-          <div class="tweet-header">
-            <div class="tweet-author-info">
-              <span 
-                class="tweet-name clickable" 
-                @click.stop="filterByMember(ui.detailTweet.author_id)"
-              >
-                {{ ui.detailTweet.name_ja }}@いきづらい部！
-              </span>
-              <span 
-                class="tweet-id clickable" 
-                @click.stop="filterByMember(ui.detailTweet.author_id)"
-              >
-                {{ ui.detailTweet.twitter_id }}
-              </span>
-            </div>
-            <div class="tweet-time-container">
-              <span 
-                class="tweet-time" 
-                @click.stop="toggleTimeFormat"
-              >
-                {{ displayTime }}
-              </span>
-            </div>
-          </div>
-          <!-- 推文內容 -->
-          <div class="tweet-text" v-html="linkify(ui.detailTweet.content)"></div>
-          
-          <!-- 推文媒體（如果有圖片） -->
-          <div v-if="ui.detailTweet.image_url || ui.detailTweet.media_urls" class="tweet-media">
-            <img 
-              :src="ui.detailTweet.image_url || ui.detailTweet.media_urls" 
-              :alt="'推文圖片'"
-              class="tweet-image"
-            />
-            <div v-if="ui.detailTweet.media_type" class="media-badge">
-              <span class="icon">{{ ui.detailTweet.media_type === 'photo' ? 'image' : 'play_circle' }}</span>
-              <span>{{ ui.detailTweet.media_type }}</span>
-            </div>
-          </div>
+  <Transition name="modal">
+    <div v-if="ui.detail" class="modal-overlay" @click.self="closeModal">
+      <div class="modal show">
+        <div class="modal-header">
+          <h3>{{ t('tweet_detail_header') }}</h3>
+          <button class="modal-close-btn" @click="closeModal">&times;</button>
         </div>
-      </article>
+        <div class="modal-content">
+          <article v-if="ui.detailTweet" class="tweet">
+            <!-- 推文頭像 -->
+            <img 
+              :src="ui.detailTweet.avatar_url" 
+              :alt="ui.detailTweet.name_ja" 
+              class="tweet-avatar"
+            >
+            <div class="tweet-body">
+              <!-- 推文標題行 -->
+              <div class="tweet-header">
+                <div class="tweet-author-info">
+                  <span 
+                    class="tweet-name clickable" 
+                    @click.stop="filterByMember(ui.detailTweet.author_id)"
+                  >
+                    {{ ui.detailTweet.name_ja }}@いきづらい部！
+                  </span>
+                  <span 
+                    class="tweet-id clickable" 
+                    @click.stop="filterByMember(ui.detailTweet.author_id)"
+                  >
+                    {{ ui.detailTweet.twitter_id }}
+                  </span>
+                </div>
+                <div class="tweet-time-container">
+                  <span 
+                    class="tweet-time" 
+                    @click.stop="toggleTimeFormat"
+                  >
+                    {{ displayTime }}
+                  </span>
+                </div>
+              </div>
+              <!-- 推文內容 -->
+              <div class="tweet-text" v-html="linkify(ui.detailTweet.content)"></div>
+              
+              <!-- 推文媒體（如果有圖片） -->
+              <div v-if="ui.detailTweet.image_url || ui.detailTweet.media_urls" class="tweet-media">
+                <img 
+                  :src="ui.detailTweet.image_url || ui.detailTweet.media_urls" 
+                  :alt="'推文圖片'"
+                  class="tweet-image"
+                />
+                <div v-if="ui.detailTweet.media_type" class="media-badge">
+                  <span class="icon">{{ ui.detailTweet.media_type === 'photo' ? 'image' : 'play_circle' }}</span>
+                  <span>{{ ui.detailTweet.media_type }}</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script setup>
@@ -153,8 +157,47 @@ const handleIdClick = (tweet) => {
   backdrop-filter: blur(12px);
 }
 
-.modal.show {
-  opacity: 1;
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  width: min(92vw, 600px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+/* Modal Transition */
+.modal-enter-active, .modal-leave-active {
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.modal-enter-from, .modal-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.modal-enter-active .modal, .modal-leave-active .modal {
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.modal-enter-from .modal, .modal-leave-to .modal {
+  transform: translateY(20px) scale(0.98);
 }
 
 .modal-header {
@@ -345,7 +388,7 @@ const handleIdClick = (tweet) => {
 
 .media-badge .icon {
   font-family: 'Material Symbols Outlined';
-  font-size: 18px;
+  font-size: 20px;
 }
 
 /* 手機版樣式 */
