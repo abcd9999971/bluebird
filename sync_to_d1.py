@@ -44,6 +44,31 @@ MEMBERS_DATA = {
     'shion': {'name_ja': '佐々木翔音', 'twitter_id': '@ShaunTheBunny', 'color': '#9b9b9b', 'grade': '1年生', 'birthday': '11月11日', 'blood_type': '？', 'height': '？'}
 }
 
+def convert_media_url(nitter_url):
+    """
+    將 Nitter 本地 URL 轉換為 Twitter CDN URL
+    例如: http://localhost:8080/pic/orig/media%2FG8wY1l-bwAAMPp1.jpg
+    轉為: https://pbs.twimg.com/media/G8wY1l-bwAAMPp1.jpg
+    """
+    if not nitter_url or nitter_url == '':
+        return None
+    
+    # 檢查是否為 Nitter URL
+    if 'localhost' in nitter_url or 'nitter' in nitter_url:
+        import re
+        from urllib.parse import unquote
+        
+        # 提取檔案名 /pic/orig/media%2F{filename}
+        match = re.search(r'/pic/orig/media%2F(.+?)(?:\?|$)', nitter_url)
+        if not match:
+            match = re.search(r'/pic/orig/media/(.+?)(?:\?|$)', nitter_url)
+        
+        if match:
+            filename = unquote(match.group(1))
+            return f'https://pbs.twimg.com/media/{filename}'
+    
+    return nitter_url
+
 def parse_nitter_date(date_str):
     """解析 Nitter 日期格式"""
     if not date_str:
@@ -291,7 +316,8 @@ def sync_data():
         if row['media_urls']:
             media_urls = row['media_urls'].split(',')
             if media_urls:
-                image_url = media_urls[0].strip()
+                # 轉換 Nitter URL 為 Twitter CDN URL
+                image_url = convert_media_url(media_urls[0].strip())
         
         # 插入推文
         d1_cursor.execute('''
