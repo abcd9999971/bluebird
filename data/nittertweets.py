@@ -202,10 +202,59 @@ class NitterScraper:
                     if video_source:
                         media_urls.append(video_source.get('src', ''))
             
+            # 引用推文解析 (使用正確的 Nitter 結構)
+            quote_data = {
+                'quote_id': None,
+                'quote_text': None,
+                'quote_author_id': None,
+                'quote_author_name': None,
+                'quote_avatar': None
+            }
+            
+            # 尋找 .quote 容器
+            quote = item.find('div', class_='quote')
+            if quote:
+                # 1. 從 quote-link 取得推文 ID
+                quote_link = quote.find('a', class_='quote-link')
+                if quote_link and quote_link.get('href'):
+                    href = quote_link.get('href', '')
+                    # href 格式: /username/status/1234567890
+                    parts = href.split('/')
+                    if len(parts) >= 3 and 'status' in parts:
+                        status_idx = parts.index('status')
+                        if status_idx + 1 < len(parts):
+                            quote_data['quote_id'] = parts[status_idx + 1].split('#')[0]
+                
+                # 2. 取得引用推文文字
+                quote_text_div = quote.find('div', class_='quote-text')
+                if quote_text_div:
+                    quote_data['quote_text'] = quote_text_div.get_text(strip=True)
+                
+                # 3. 取得作者資訊 - 從 username 取得 ID
+                username_link = quote.find('a', class_='username')
+                if username_link:
+                    username_text = username_link.get_text(strip=True)
+                    # 移除 @ 符號
+                    quote_data['quote_author_id'] = username_text.lstrip('@')
+                
+                # 4. 取得作者名稱 - 從 fullname 取得
+                fullname_link = quote.find('a', class_='fullname')
+                if fullname_link:
+                    quote_data['quote_author_name'] = fullname_link.get_text(strip=True)
+                
+                # 5. 取得頭像 (需要補全 URL)
+                quote_avatar_img = quote.find('img', class_='avatar')
+                if quote_avatar_img and quote_avatar_img.get('src'):
+                    avatar_src = quote_avatar_img.get('src', '')
+                    # 如果是相對路徑,需要補全 (在 _parse_tweet 中沒有 self.current_instance 可用)
+                    # 我們保留原始路徑，讓 sync 腳本處理
+                    quote_data['quote_avatar'] = avatar_src
+            
             tweet_data['media_type'] = media_type
             tweet_data['media_urls'] = ','.join(media_urls)
             tweet_data['author_id'] = username
-            tweet_data['type'] = 'Tweet'
+            tweet_data['type'] = 'Quote' if quote_data['quote_id'] else 'Tweet'
+            tweet_data.update(quote_data)
             
             return tweet_data
             
@@ -256,7 +305,12 @@ class NitterScraper:
                     hashtags TEXT,
                     urls TEXT,
                     media_type TEXT,
-                    media_urls TEXT
+                    media_urls TEXT,
+                    quote_id TEXT,
+                    quote_text TEXT,
+                    quote_author_id TEXT,
+                    quote_author_name TEXT,
+                    quote_avatar TEXT
                 )
             ''')
             
@@ -268,8 +322,9 @@ class NitterScraper:
                 try:
                     cursor.execute(f'''
                         INSERT OR REPLACE INTO {table_name} 
-                        (tweet_id, text, author_id, type, created_at, hashtags, urls, media_type, media_urls)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        (tweet_id, text, author_id, type, created_at, hashtags, urls, media_type, media_urls,
+                         quote_id, quote_text, quote_author_id, quote_author_name, quote_avatar)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ''', (
                         tweet.get('tweet_id', ''),
                         tweet.get('text', ''),
@@ -279,7 +334,12 @@ class NitterScraper:
                         tweet.get('hashtags', ''),
                         tweet.get('urls', ''),
                         tweet.get('media_type', ''),
-                        tweet.get('media_urls', '')
+                        tweet.get('media_urls', ''),
+                        tweet.get('quote_id'),
+                        tweet.get('quote_text'),
+                        tweet.get('quote_author_id'),
+                        tweet.get('quote_author_name'),
+                        tweet.get('quote_avatar')
                     ))
                     inserted += 1
                 except sqlite3.IntegrityError:
@@ -323,21 +383,27 @@ created_at TEXT,
 hashtags TEXT,
 urls TEXT,
 media_type TEXT,
-media_urls TEXT
+media_urls TEXT,
+quote_id TEXT,
+quote_text TEXT,
+quote_author_id TEXT,
+quote_author_name TEXT,
+quote_avatar TEXT
 );
 
 ''')
                 
                 # 寫入數據
-                f.write(f"\nINSERT INTO {table_name} (tweet_id,text,author_id,type,created_at,hashtags,urls,media_type,media_urls) VALUES \n")
+                f.write(f"\nINSERT INTO {table_name} (tweet_id,text,author_id,type,created_at,hashtags,urls,media_type,media_urls,quote_id,quote_text,quote_author_id,quote_author_name,quote_avatar) VALUES \n")
                 
                 for i, tweet in enumerate(tweets):
                     # 轉義單引號
                     text = tweet.get('text', '').replace("'", "''")
+                    quote_text = tweet.get('quote_text', '').replace("'", "''") if tweet.get('quote_text') else ''
                     
                     comma = ',' if i < len(tweets) - 1 else ';'
                     
-                    f.write(f'''("{tweet.get('tweet_id', '')}",'{text}','{tweet.get('author_id', '')}','{tweet.get('type', 'Tweet')}','{tweet.get('created_at', '')}','{tweet.get('hashtags', '')}','{tweet.get('urls', '')}','{tweet.get('media_type', '')}','{tweet.get('media_urls', '')}'){comma}
+                    f.write(f'''("{tweet.get('tweet_id', '')}",'{text}','{tweet.get('author_id', '')}','{tweet.get('type', 'Tweet')}','{tweet.get('created_at', '')}','{tweet.get('hashtags', '')}','{tweet.get('urls', '')}','{tweet.get('media_type', '')}','{tweet.get('media_urls', '')}','{tweet.get('quote_id', '')}','{quote_text}','{tweet.get('quote_author_id', '')}','{tweet.get('quote_author_name', '')}','{tweet.get('quote_avatar', '')}'){comma}
 ''')
             
             print(f"\n✓ 已匯出到 {output_file}")
@@ -358,7 +424,7 @@ def main():
     ]
     
     # 初始化爬蟲
-    scraper = NitterScraper(db_path='../dump.sql')
+    scraper = NitterScraper(db_path='mydb.db')
     
     for account in accounts:
         print(f"\n{'='*60}")

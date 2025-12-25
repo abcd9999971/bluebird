@@ -47,6 +47,23 @@ class NitterScraper:
             cursor.execute('SELECT COUNT(*) FROM tweets')
             existing_count = cursor.fetchone()[0]
             logger.info(f"📊 資料庫已存在，目前有 {existing_count} 條推文")
+            
+            # 檢查是否需要添加引用相關欄位
+            cursor.execute("PRAGMA table_info(tweets)")
+            columns = [row[1] for row in cursor.fetchall()]
+            # Ensure all quote columns exist
+            quote_cols = {
+                'quote_id': 'TEXT',
+                'quote_text': 'TEXT',
+                'quote_author_id': 'TEXT',
+                'quote_author_name': 'TEXT',
+                'quote_avatar': 'TEXT',
+                'quote_image_url': 'TEXT'
+            }
+            for col, col_type in quote_cols.items():
+                if col not in columns:
+                    logger.info(f"🆕 添加引用欄位: {col}")
+                    cursor.execute(f"ALTER TABLE tweets ADD COLUMN {col} {col_type}")
         else:
             logger.info("🆕 建立新資料庫")
         
@@ -60,99 +77,83 @@ class NitterScraper:
                 hashtags TEXT,
                 urls TEXT,
                 media_type TEXT,
-                media_urls TEXT
+                media_urls TEXT,
+                quote_id TEXT,
+                quote_text TEXT,
+                quote_author_id TEXT,
+                quote_author_name TEXT,
+                quote_avatar TEXT,
+                quote_image_url TEXT
             )
         ''')
         
         conn.commit()
         conn.close()
     
-    def scrape_user(self, username, user_id, skip_pages=0, max_pages=12):
-        """抓取單個用戶的推文"""
-        logger.info(f"\n{'='*50}")
-        logger.info(f"開始抓取: @{username} (ID: {user_id})")
-        logger.info(f"跳過前 {skip_pages} 頁，抓取第 {skip_pages+1}-{skip_pages+max_pages} 頁")
-        logger.info(f"{'='*50}")
-        
-        tweets = []
-        page = 1
+    
+    def scrape_user(self, username, user_id):
+        """爬取單個用戶的推文"""
         cursor = None
-        total_pages = skip_pages + max_pages
+        all_tweets = []
+        page_count = 0
         
-        while page <= total_pages:
+        while True:
+            page_count += 1
             url = f"{self.nitter_url}/{username}"
             if cursor:
                 url += f"?cursor={cursor}"
             
-            is_skip_page = page <= skip_pages
-            status = "⏩ 跳過" if is_skip_page else "📄 抓取"
-            logger.info(f"{status} 第 {page} 頁: {url[:80]}...")
+            logger.info(f"爬取 {username} 第 {page_count} 頁: {url}")
             
             try:
                 response = requests.get(url, timeout=10)
-                if response.status_code != 200:
-                    logger.error(f"HTTP {response.status_code}")
+                response.raise_for_status()
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # 找到推文
+                timeline_items = soup.find_all('div', class_='timeline-item')
+                if not timeline_items:
+                    logger.info(f"沒有找到推文，停止爬取 {username}")
                     break
                 
-                soup = BeautifulSoup(response.text, 'html.parser')
+                page_tweets = []
+                for item in timeline_items:
+                    # 跳過公告等非推文內容
+                    if 'timeline-item' not in item.get('class', []):
+                        continue
+                    # 跳過轉推 (可視需求調整)
+                    if item.find('div', class_='retweet-header'):
+                        continue
+                        
+                    tweet = self.parse_tweet(item, user_id)
+                    if tweet:
+                        page_tweets.append(tweet)
                 
-                # 解析推文（只有非跳過頁才保存）
-                timeline_items = soup.find_all('div', class_='timeline-item')
-                page_tweets = 0
+                if page_tweets:
+                    all_tweets.extend(page_tweets)
+                    logger.info(f"本頁爬取 {len(page_tweets)} 條推文，目前累計 {len(all_tweets)} 條")
                 
-                if not is_skip_page:
-                    for item in timeline_items:
-                        tweet_data = self.parse_tweet(item, user_id)
-                        if tweet_data:
-                            tweets.append(tweet_data)
-                            page_tweets += 1
-                
-                if is_skip_page:
-                    logger.info(f"  ⏭ 跳過 {len(timeline_items)} 條推文")
-                else:
-                    logger.info(f"  → 保存 {page_tweets} 條推文")
-                
-                # 查找下一頁 - 找最後一個 show-more (排除 "Load newest")
-                show_more_divs = soup.find_all('div', class_='show-more')
-                show_more = None
-                for div in reversed(show_more_divs):
-                    link = div.find('a')
-                    if link and 'Load more' in link.get_text():
-                        show_more = div
-                        break
-                
+                # 尋找下一頁的 cursor
+                show_more = soup.find('div', class_='show-more')
                 if show_more and show_more.find('a'):
                     href = show_more.find('a')['href']
                     if 'cursor=' in href:
-                        new_cursor = href.split('cursor=')[-1]
-                        if new_cursor and new_cursor != cursor:  # 確保 cursor 有變化
-                            cursor = new_cursor
-                            page += 1
-                            
-                            # 隨機延遲 2-5 秒
-                            delay = random.uniform(2, 5)
-                            logger.debug(f"  等待 {delay:.1f} 秒...")
-                            time.sleep(delay)
-                        else:
-                            logger.info("  cursor 未變化，停止")
-                            break
+                        cursor = href.split('cursor=')[-1]
                     else:
-                        logger.info("  連結無 cursor，停止")
+                        logger.info("未找到下一頁 cursor，結束")
                         break
                 else:
-                    logger.info("  已到最後一頁")
+                    logger.info("沒有 'Show more' 按鈕，結束")
                     break
-                    
+                
+                time.sleep(2)  # 延遲避免請求過快
+                
             except Exception as e:
-                logger.error(f"抓取失敗: {e}")
+                logger.error(f"爬取過程出錯: {e}")
                 break
         
-        # 保存到資料庫
-        new_count, update_count = self.save_tweets(tweets, username)
-        logger.info(f"✓ 完成: 新增 {new_count} 條，更新 {update_count} 條")
-        
-        return len(tweets)
-    
+        return all_tweets
+
     def parse_tweet(self, item, author_id):
         """解析單條推文"""
         try:
@@ -203,17 +204,76 @@ class NitterScraper:
             # 時間
             tweet_date = item.find('span', class_='tweet-date')
             created_at = tweet_date.find('a')['title'] if tweet_date and tweet_date.find('a') else ''
+
+            # 引用推文解析 (使用正確的 Nitter 結構)
+            quote_data = {
+                'quote_id': None,
+                'quote_text': None,
+                'quote_author_id': None,
+                'quote_author_name': None,
+                'quote_avatar': None,
+                'quote_image_url': None
+            }
+            
+            # 尋找 .quote 容器
+            quote = item.find('div', class_='quote')
+            if quote:
+                # 1. 從 quote-link 或 href 取得推文 ID
+                quote_link = quote.find('a', class_='quote-link')
+                if quote_link and 'href' in quote_link.attrs:
+                    href = quote_link['href']
+                    # href 格式: /username/status/1234567890
+                    parts = href.split('/')
+                    if 'status' in parts:
+                        status_idx = parts.index('status')
+                        if status_idx + 1 < len(parts):
+                            quote_data['quote_id'] = parts[status_idx + 1].split('#')[0]
+                
+                # 2. 取得引用推文文字
+                quote_text_div = quote.find('div', class_='quote-text')
+                if quote_text_div:
+                    quote_data['quote_text'] = quote_text_div.get_text(strip=True)
+                
+                # 3. 取得作者資訊
+                author_container = quote.find('div', class_='fullname-and-username') or quote
+                
+                username_link = author_container.find('a', class_='username')
+                if username_link:
+                    quote_data['quote_author_id'] = username_link.get_text(strip=True).lstrip('@')
+                
+                fullname_link = author_container.find('a', class_='fullname')
+                if fullname_link:
+                    quote_data['quote_author_name'] = fullname_link.get_text(strip=True)
+                
+                # 4. 取得引用者頭像
+                quote_avatar_img = quote.find('img', class_='avatar')
+                if quote_avatar_img and 'src' in quote_avatar_img.attrs:
+                    avatar_src = quote_avatar_img['src']
+                    if avatar_src.startswith('/pic/'):
+                        avatar_src = self.nitter_url + avatar_src
+                    quote_data['quote_avatar'] = avatar_src
+                
+                # 5. 取得引用推文中的圖片
+                quote_media = quote.find('div', class_='quote-media-container') or quote.find('div', class_='attachments')
+                if quote_media:
+                    q_img = quote_media.find('a', class_='still-image')
+                    if q_img and 'href' in q_img.attrs:
+                        q_img_url = q_img['href']
+                        if q_img_url.startswith('/pic/'):
+                            q_img_url = self.nitter_url + q_img_url
+                        quote_data['quote_image_url'] = q_img_url
             
             return {
                 'tweet_id': tweet_id,
                 'text': text,
                 'author_id': str(author_id),
-                'type': 'Tweet',
+                'type': 'Quote' if quote_data['quote_id'] else 'Tweet',
                 'created_at': created_at,
                 'hashtags': ','.join(hashtags),
                 'urls': ','.join(urls),
                 'media_type': media_type or '',
-                'media_urls': ','.join(media_urls)
+                'media_urls': ','.join(media_urls),
+                **quote_data
             }
             
         except Exception as e:
@@ -239,8 +299,9 @@ class NitterScraper:
             
             cursor.execute('''
                 INSERT OR REPLACE INTO tweets 
-                (tweet_id, text, author_id, type, created_at, hashtags, urls, media_type, media_urls)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (tweet_id, text, author_id, type, created_at, hashtags, urls, media_type, media_urls,
+                 quote_id, quote_text, quote_author_id, quote_author_name, quote_avatar, quote_image_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 tweet['tweet_id'],
                 tweet['text'],
@@ -250,7 +311,13 @@ class NitterScraper:
                 tweet['hashtags'],
                 tweet['urls'],
                 tweet['media_type'],
-                tweet['media_urls']
+                tweet['media_urls'],
+                tweet.get('quote_id'),
+                tweet.get('quote_text'),
+                tweet.get('quote_author_id'),
+                tweet.get('quote_author_name'),
+                tweet.get('quote_avatar'),
+                tweet.get('quote_image_url')
             ))
             
             if exists:
@@ -279,8 +346,10 @@ class NitterScraper:
             username = user['username']
             user_id = user['id']
             
-            count = self.scrape_user(username, user_id)
-            total_tweets += count
+            tweets = self.scrape_user(username, user_id)
+            new_c, up_c = self.save_tweets(tweets, username)
+            total_tweets += (new_c + up_c)
+            logger.info(f"✨ {username} 完成：新增 {new_c} 條，更新 {up_c} 條")
             
             # 每個用戶之間暫停 5-10 秒
             if user != self.config['users'][-1]:

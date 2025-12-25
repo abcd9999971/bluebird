@@ -14,6 +14,7 @@
       @shareTweet="shareTweet"
       @handleTweetTextClick="handleTweetTextClick"
       @filterByMember="filterByMember"
+      @jumpToTweet="(tweetId, authorId) => emit('jumpToTweet', tweetId, authorId)"
     />
   </div>
 
@@ -45,7 +46,8 @@ const emit = defineEmits([
   'toggleLike',
   'shareTweet',
   'handleTweetTextClick',
-  'filterByMember'
+  'filterByMember',
+  'jumpToTweet'
 ]);
 
 // 翻譯函數 - 獲取多語言文字
@@ -126,6 +128,7 @@ onBeforeUnmount(() => {
   word-wrap: normal;
   direction: ltr;
   -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
   vertical-align: middle;
   margin-bottom: var(--spacing-unit);
