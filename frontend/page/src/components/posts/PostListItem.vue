@@ -44,8 +44,46 @@
       <!-- 推文內容 -->
       <div class="tweet-text" v-html="linkify(processedContent, searchTerm)" @click.stop="handleTweetTextClick"></div>
       
-      <!-- 推文媒體（如果有圖片） -->
-      <div v-if="tweet.image_url || tweet.media_urls" class="tweet-media" @click.stop>
+      <!-- 引用推文區域 (卡片內包卡片) -->
+      <div 
+        v-if="tweet.quote_id" 
+        class="quote-card" 
+        @click.stop.prevent="handleQuoteClick"
+      >
+        <div class="quote-card-header">
+          <div class="quote-card-author-left">
+            <img 
+              v-if="quoteAvatar"
+              :src="quoteAvatar" 
+              class="quote-card-avatar"
+              @error="(e) => e.target.style.display = 'none'"
+            />
+            <div class="quote-card-info">
+              <span class="quote-card-name" :style="quoteAuthorStyle">{{ quoteAuthorName }}</span>
+              <span class="quote-card-id">@{{ tweet.quote_author_id }}</span>
+            </div>
+          </div>
+          <!-- 原始推文按鈕 (僅限成員) -->
+          <button 
+            v-if="isQuoteAuthorMember" 
+            class="jump-back-btn" 
+            title="跳轉至原始推文"
+            @click.stop.prevent="handleQuoteClick"
+          >
+            <span class="icon">arrow_outward</span>
+            <span class="text">原始推文</span>
+          </button>
+        </div>
+        <div class="quote-card-text" v-html="linkify(tweet.quote_text, searchTerm)"></div>
+        
+        <!-- 引用推文媒體 (圖片) -->
+        <div v-if="tweet.quote_image_url" class="quote-card-media">
+          <img :src="tweet.quote_image_url" class="quote-card-image" loading="lazy" />
+        </div>
+      </div>
+      
+      <!-- 推文媒體（如果有圖片，且不與引用推文圖片重複） -->
+      <div v-if="shouldShowMainMedia && (tweet.image_url || tweet.media_urls)" class="tweet-media" @click.stop>
         <img 
           :src="tweet.image_url || tweet.media_urls" 
           :alt="'推文圖片'"
@@ -69,6 +107,26 @@
         >
           <span class="icon">favorite</span>
         </button>
+
+        <!-- 被引用列表 (雙向關聯按鈕 - PREMIUM CENTERED PILL) -->
+        <div v-if="tweet.quoted_by && tweet.quoted_by.length > 0" class="quoted-by-pill-container">
+          <div class="quoted-by-pill">
+            <span class="icon">format_quote</span>
+            <span class="count">{{ tweet.quoted_by.length }} 引用</span>
+            <div class="quoter-avatars-list">
+              <img 
+                v-for="(quoter, idx) in tweet.quoted_by" 
+                :key="idx"
+                :src="authors[quoter.author_id]?.avatar_url" 
+                class="premium-quoter-avatar clickable"
+                :title="authors[quoter.author_id]?.name_ja || quoter.author_id"
+                @click.stop="emit('jumpToTweet', quoter.tweet_id, quoter.author_id)"
+                @error="(e) => e.target.style.display = 'none'"
+              />
+            </div>
+          </div>
+        </div>
+
         <!-- 分享按鈕 -->
         <button 
           class="action-btn share" 
@@ -103,10 +161,10 @@ const props = defineProps({
 const emit = defineEmits([
   'openDetail',
   'toggleLike',
-  'shareTweet',
   'handleTweetTextClick',
   'copyLink',
-  'filterByMember'
+  'filterByMember',
+  'jumpToTweet'
 ]);
 
 // 日期格式狀態
@@ -199,6 +257,90 @@ const authorNameStyle = computed(() => {
 const openMediaPreview = () => {
   openDetail(props.tweet);
 };
+
+// 預設頭貼 (使用 Twitter 預設)
+const defaultAvatar = 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png';
+
+// 檢查引用作者是否為成員
+const isQuoteAuthorMember = computed(() => {
+  return findMember(props.tweet.quote_author_id) !== null;
+});
+
+// 處理引用推文點擊
+const handleQuoteClick = () => {
+  if (!props.tweet.quote_id) return;
+  
+  // 1. 強效成員檢測
+  const member = findMember(props.tweet.quote_author_id);
+
+  // 如果找到成員，執行跳轉 (最高優先級)
+  if (member) {
+    console.log(`[JumpBack] Member detected: ${member.author_id} for quote ${props.tweet.quote_id}`);
+    emit('jumpToTweet', props.tweet.quote_id, member.author_id);
+    return;
+  }
+  
+  // 2. 如果不是成員，顯示「詳情推文卡片」
+  console.log(`[JumpBack] Non-member quote detected. Opening stub card for ${props.tweet.quote_author_id}`);
+  const stubTweet = {
+    id: props.tweet.quote_id,
+    author_id: props.tweet.quote_author_id,
+    name_ja: quoteAuthorName.value,
+    content: props.tweet.quote_text,
+    image_url: props.tweet.quote_image_url,
+    created_at: props.tweet.created_at, 
+    type: 'Tweet',
+    _isQuoteStub: true,
+    avatar_url: quoteAvatar.value,
+    twitter_id: `@${props.tweet.quote_author_id}`,
+    liked: false
+  };
+  emit('openDetail', stubTweet);
+};
+
+// 檢查是否應該顯示主推文媒體 (如果與引用推文媒體相同則隱藏，避免重複)
+const shouldShowMainMedia = computed(() => {
+  if (props.tweet.quote_id && props.tweet.quote_image_url && props.tweet.image_url) {
+    return props.tweet.image_url !== props.tweet.quote_image_url;
+  }
+  return true;
+});
+
+// 輔助函數：查找成員 (不分大小寫)
+const findMember = (authorId) => {
+  if (!authorId || !props.authors) return null;
+  const targetId = authorId.trim().toLowerCase();
+  
+  // 優先直接匹配 ID
+  if (props.authors[authorId]) return props.authors[authorId];
+  
+  // 其次模糊匹配
+  return Object.values(props.authors).find(m => {
+    if (!m) return false;
+    const mid = m.author_id?.toLowerCase();
+    const mtid = m.twitter_id?.replace('@', '').toLowerCase();
+    return mid === targetId || mtid === targetId;
+  });
+};
+
+// 引用推文的頭像邏輯
+const quoteAvatar = computed(() => {
+  if (!props.tweet.quote_id) return '';
+  const member = findMember(props.tweet.quote_author_id);
+  return member ? member.avatar_url : null;
+});
+
+// 引用推文的作者顯示名稱
+const quoteAuthorName = computed(() => {
+  const member = findMember(props.tweet.quote_author_id);
+  return member ? member.name_ja : props.tweet.quote_author_name;
+});
+
+// 引用推文的作者樣式
+const quoteAuthorStyle = computed(() => {
+  const member = findMember(props.tweet.quote_author_id);
+  return member ? { color: member.color } : {};
+});
 
 
 
@@ -364,6 +506,85 @@ onBeforeUnmount(() => {
   padding: 1px 2px;
   border-radius: 2px;
   font-weight: 600;
+}
+
+/* 引用推文樣式 */
+.quote-container {
+  margin-top: calc(var(--spacing-unit) * 0.5);
+  margin-bottom: var(--spacing-unit);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-unit);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  background-color: transparent;
+}
+
+.quote-container:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-outline);
+}
+
+.quote-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.quote-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.quote-media {
+  margin-top: calc(var(--spacing-unit) * 0.5);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-secondary);
+}
+
+.quote-image {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  max-height: 200px;
+}
+
+.quote-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.quote-info {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 0.5);
+  font-size: 0.9rem;
+  overflow: hidden;
+}
+
+.quote-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.quote-id {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quote-text {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* 推文媒體樣式 */
@@ -539,4 +760,217 @@ onBeforeUnmount(() => {
     font-size: 0.95rem;
   }
 }
+
+/* 引用推文卡片樣式 (卡片內包卡片) */
+.quote-card {
+  margin-top: calc(var(--spacing-unit) * 1);
+  margin-bottom: var(--spacing-unit);
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  padding: var(--spacing-unit);
+  background-color: var(--bg-secondary);
+  transition: var(--transition-fast);
+  overflow: hidden;
+}
+
+.quote-card:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--brand-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-2);
+}
+
+.quote-card:active {
+  transform: scale(0.98);
+  background-color: color-mix(in srgb, var(--brand-color) 5%, var(--bg-hover));
+}
+
+.quote-card-header {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 1);
+  margin-bottom: calc(var(--spacing-unit) * 0.75);
+  justify-content: space-between;
+}
+
+.quote-card-author-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: auto;
+}
+
+.jump-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--brand-color);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.jump-back-btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.jump-back-btn .icon {
+  font-size: 14px;
+}
+
+.quote-card-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.quote-card-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quote-card-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.quote-card-id {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.quote-card-text {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: calc(var(--spacing-unit) * 0.25);
+}
+
+.quote-card-media {
+  margin-top: calc(var(--spacing-unit) * 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-secondary);
+}
+
+.quote-card-image {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+}
+
+/* 被引用列表 PILL 樣式 (PREMIUM FLOATING) */
+.quoted-by-pill-container {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+  margin: 0 16px;
+  perspective: 1000px;
+}
+
+.quoted-by-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-secondary);
+  border-radius: 24px;
+  padding: 6px 18px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  cursor: default;
+  position: relative;
+  z-index: 1;
+}
+
+.quoted-by-pill:hover {
+  border-color: var(--brand-color);
+  background-color: color-mix(in srgb, var(--brand-color) 6%, var(--bg-secondary));
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px) translateZ(10px);
+}
+
+.quoted-by-pill .icon {
+  color: var(--brand-color);
+  font-size: 20px;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--brand-color) 30%, transparent));
+}
+
+.quoted-by-pill .count {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.quoter-avatars-list {
+  display: flex;
+  align-items: center;
+  border-left: 1px solid var(--border-secondary);
+  padding-left: 12px;
+  margin-left: 8px;
+  gap: 2px;
+}
+
+.premium-quoter-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-primary);
+  margin-left: -14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.premium-quoter-avatar:hover {
+  transform: scale(1.25) translateY(-4px);
+  z-index: 10;
+  border-color: var(--brand-color);
+  box-shadow: 0 0 15px color-mix(in srgb, var(--brand-color) 40%, transparent);
+}
+
+.premium-quoter-avatar:first-child {
+  margin-left: 0;
+}
+
+/* 跳轉高亮動畫: 強效版 */
+@keyframes jump-highlight-pulse {
+  0% { 
+    box-shadow: 0 0 0 0 rgba(var(--brand-color-rgb), 0.5); 
+    border-color: var(--brand-color);
+    background-color: color-mix(in srgb, var(--brand-color) 15%, var(--bg-surface));
+  }
+  40% {
+    box-shadow: 0 0 0 20px rgba(var(--brand-color-rgb), 0);
+  }
+  100% { 
+    box-shadow: 0 0 0 0 rgba(var(--brand-color-rgb), 0);
+    border-color: var(--border-primary);
+    background-color: var(--bg-surface);
+  }
+}
+
+:deep(.jump-highlight) {
+  animation: jump-highlight-pulse 2.5s cubic-bezier(0.2, 0, 0.2, 1);
+  border-width: 2px !important;
+  z-index: 100;
+  position: relative;
+}
+
 </style>

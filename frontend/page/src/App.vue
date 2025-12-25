@@ -91,6 +91,7 @@
             @toggleLike="appLogic.toggleLike"
             @shareTweet="appLogic.shareTweet"
             @handleTweetTextClick="appLogic.handleTweetTextClick"
+            @jumpToTweet="appLogic.jumpToTweet"
           />
         </template>
       </AppLayout>

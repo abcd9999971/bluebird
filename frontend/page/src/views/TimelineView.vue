@@ -68,6 +68,7 @@
           @shareTweet="shareTweet"
           @handleTweetTextClick="handleTweetTextClick"
           @filterByMember="setMemberFilter"
+          @jumpToTweet="(tweetId, authorId) => emit('jumpToTweet', tweetId, authorId)"
         />
       </div>
 
@@ -149,7 +150,8 @@ const emit = defineEmits([
   'openDetail',
   'toggleLike',
   'shareTweet',
-  'handleTweetTextClick'
+  'handleTweetTextClick',
+  'jumpToTweet'
 ]);
 
 // 響應式變數

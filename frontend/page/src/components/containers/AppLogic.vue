@@ -362,6 +362,86 @@ const setupIntersectionObserver = () => {
 };
 
 /**
+ * 跨過濾跳轉到指定推文
+ * 核心機制：切換成員 -> 清除其他過濾 -> 等待渲染 -> 滾動到目標
+ * @param {string} tweetId - 目標推文 ID
+ * @param {string} authorId - 目標作者 ID
+ */
+const jumpToTweet = async (tweetId, authorId) => {
+  if (!tweetId) return;
+  console.log(`[JumpSystem V8] Target ID: ${tweetId}, Author: ${authorId}`);
+  
+  // 1. Data Analysis: Try to find the tweet object and its internal sequence ID
+  const tweet = allTweets.find(t => String(t.id) === String(tweetId) || String(t.tweet_id) === String(tweetId));
+  const internalId = tweet ? tweet.id : null;
+  const twitterId = tweet ? tweet.tweet_id : tweetId;
+
+  console.log(`[JumpSystem V8] Resolved IDs - Internal: ${internalId}, Twitter: ${twitterId}`);
+  
+  // 2. Clear basic filters
+  filters.search = '';
+  filters.onlyLiked = false;
+  filters.month = null;
+
+  // 3. Apply target filters to reveal the tweet
+  if (tweet) {
+    const targetYear = new Date(tweet.created_at).getFullYear();
+    if (filters.year !== targetYear) {
+      console.log(`[JumpSystem V8] Switching year to ${targetYear}`);
+      filters.year = targetYear;
+    }
+    
+    if (filters.member !== null && filters.member !== tweet.author_id) {
+       console.log(`[JumpSystem V8] Switching member filter to ${tweet.author_id}`);
+       filters.member = tweet.author_id;
+    }
+  } else {
+    // Fallback: Clear member filter if tweet is unknown
+    filters.member = null;
+  }
+
+  // 4. Wait for Vue to update the DOM based on filter changes
+  await nextTick();
+  
+  // 5. Dual-Selector Polling
+  const pollForElement = (maxAttempts = 15, interval = 150) => {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const check = () => {
+        // Look for internal ID OR Twitter ID in data-tweet-id attribute
+        const selector = `.tweet[data-tweet-id="${internalId}"], .tweet[data-tweet-id="${twitterId}"]`;
+        const el = document.querySelector(selector);
+        
+        if (el) {
+          console.log(`[JumpSystem V8] Found element using selector: ${selector}`);
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('jump-highlight');
+          setTimeout(() => el.classList.remove('jump-highlight'), 4000);
+          
+          if (tweet) scroller.activeDate = tweet.created_at.substring(0, 10);
+          resolve(true);
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          // High-pressure situation: if after 5 attempts no element, try clearing all filters as emergency
+          if (attempts === 6) {
+            console.warn(`[JumpSystem V8] Mid-way fallback: clearing member/year filters`);
+            filters.member = null;
+          }
+          setTimeout(check, interval);
+        } else {
+          console.error(`[JumpSystem V8] Failed to find element for ${tweetId} after ${maxAttempts} attempts`);
+          resolve(false);
+        }
+      };
+      check();
+    });
+  };
+
+  // 6. Execute polling
+  await pollForElement();
+};
+
+/**
  * 滾動到指定日期
  * 滾動到指定推文的位置
  * @param {number} tweetId - 推文 ID
@@ -369,9 +449,9 @@ const setupIntersectionObserver = () => {
 const scrollToDate = (tweetId) => { 
   const el = document.querySelector(`.tweet[data-tweet-id="${tweetId}"]`); 
   if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 改為 center 更好找
     // 更新當前活動日期
-    const tweet = allTweets.find(t => t.id == tweetId);
+    const tweet = allTweets.find(t => t.id == tweetId || t.tweet_id == tweetId);
     if (tweet) {
       scroller.activeDate = tweet.created_at.substring(0, 10);
     }
@@ -468,6 +548,7 @@ const initData = async () => {
     
     // 載入備用推文資料
     const processedFallbackTweets = fallbackTweetsData.map(tw => ({
+      ...tw, // 關鍵：保留所有屬性（包含 quote_id, quote_text, quoted_by 等）
       id: tw.id,
       tweet_id: tw.tweet_id || tw.id,
       author_id: tw.author_id,
@@ -478,10 +559,6 @@ const initData = async () => {
       created_at: tw.created_at,
       content: tw.content,
       type: tw.type || 'Tweet',
-      hashtags: tw.hashtags || null,
-      urls: tw.urls || null,
-      image_url: tw.image_url || null,
-      media_type: tw.media_type || null,
       liked: false,
       _pop: false
     }));
@@ -581,6 +658,7 @@ defineExpose({
   toggleLike,
   shareTweet,
   scrollToDate,
+  jumpToTweet,
   toggleTheme,
   shouldShowRefreshIndicator,
   

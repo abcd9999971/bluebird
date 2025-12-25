@@ -58,7 +58,7 @@ def convert_media_url(nitter_url):
         import re
         from urllib.parse import unquote
         
-        # 提取檔案名 /pic/orig/media%2F{filename}
+        # 1. 處理媒體圖片 /pic/orig/media%2F{filename}
         match = re.search(r'/pic/orig/media%2F(.+?)(?:\?|$)', nitter_url)
         if not match:
             match = re.search(r'/pic/orig/media/(.+?)(?:\?|$)', nitter_url)
@@ -66,6 +66,15 @@ def convert_media_url(nitter_url):
         if match:
             filename = unquote(match.group(1))
             return f'https://pbs.twimg.com/media/{filename}'
+            
+        # 2. 處理頭像 /pic/profile_images%2F{path}
+        match_profile = re.search(r'/pic/profile_images%2F(.+?)(?:\?|$)', nitter_url)
+        if not match_profile:
+            match_profile = re.search(r'/pic/profile_images/(.+?)(?:\?|$)', nitter_url)
+            
+        if match_profile:
+            path = unquote(match_profile.group(1)).replace('%2F', '/')
+            return f'https://pbs.twimg.com/profile_images/{path}'
     
     return nitter_url
 
@@ -101,17 +110,31 @@ def export_to_json():
     # 查詢所有推文，按時間倒序
     d1_cursor.execute('''
         SELECT id, tweet_id, author_id, content, type, created_at, 
-               hashtags, urls, image_url, media_type
+               hashtags, urls, image_url, media_type,
+               quote_id, quote_text, quote_author_id, quote_author_name, quote_avatar, quote_image_url
         FROM tweets
         ORDER BY created_at DESC
     ''')
     
+    # 建立引用對應表 (tweet_id -> list of members who quoted it)
+    rows = d1_cursor.fetchall()
+    quote_map = {}
+    for row in rows:
+        q_id = row['quote_id']
+        if q_id:
+            if q_id not in quote_map:
+                quote_map[q_id] = []
+            # 只記錄成員的引用 (author_id 是成員 ID)
+            if row['author_id'] not in quote_map[q_id]:
+                quote_map[q_id].append(row['author_id'])
+
     # 轉換為 JSON 格式
     tweets_list = []
-    for row in d1_cursor.fetchall():
+    for row in rows:
+        t_id = str(row['tweet_id'])
         tweet = {
             'id': row['id'],
-            'tweet_id': str(row['tweet_id']),  # 確保是字串格式
+            'tweet_id': t_id,
             'author_id': row['author_id'],
             'content': row['content'],
             'type': row['type'],
@@ -119,7 +142,16 @@ def export_to_json():
             'hashtags': row['hashtags'],
             'urls': row['urls'],
             'image_url': row['image_url'],
-            'media_type': row['media_type']
+            'media_type': row['media_type'],
+            # 引用推文資訊
+            'quote_id': row['quote_id'] if 'quote_id' in row.keys() else None,
+            'quote_text': row['quote_text'] if 'quote_text' in row.keys() else None,
+            'quote_author_id': row['quote_author_id'] if 'quote_author_id' in row.keys() else None,
+            'quote_author_name': row['quote_author_name'] if 'quote_author_name' in row.keys() else None,
+            'quote_avatar': row['quote_avatar'] if 'quote_avatar' in row.keys() else None,
+            'quote_image_url': row['quote_image_url'] if 'quote_image_url' in row.keys() else None,
+            # 被哪些成員引用 (雙向關聯)
+            'quoted_by': quote_map.get(t_id, [])
         }
         tweets_list.append(tweet)
     
@@ -244,6 +276,12 @@ def sync_data():
             urls TEXT,
             image_url TEXT,
             media_type TEXT,
+            quote_id TEXT,
+            quote_text TEXT,
+            quote_author_id TEXT,
+            quote_author_name TEXT,
+            quote_avatar TEXT,
+            quote_image_url TEXT,
             FOREIGN KEY (author_id) REFERENCES members(id)
         )
     ''')
@@ -310,6 +348,12 @@ def sync_data():
             urls TEXT,
             image_url TEXT,
             media_type TEXT,
+            quote_id TEXT,
+            quote_text TEXT,
+            quote_author_id TEXT,
+            quote_author_name TEXT,
+            quote_avatar TEXT,
+            quote_image_url TEXT,
             FOREIGN KEY (author_id) REFERENCES members(id)
         )
     ''')
@@ -338,11 +382,26 @@ def sync_data():
                 # 轉換 Nitter URL 為 Twitter CDN URL
                 image_url = convert_media_url(media_urls[0].strip())
         
+        # 處理引用數據 (安全獲取，避免舊數據庫沒有這些欄位報錯)
+        quote_id = row['quote_id'] if 'quote_id' in row.keys() else None
+        quote_text = row['quote_text'] if 'quote_text' in row.keys() else None
+        quote_author_id = row['quote_author_id'] if 'quote_author_id' in row.keys() else None
+        quote_author_name = row['quote_author_name'] if 'quote_author_name' in row.keys() else None
+        quote_avatar = row['quote_avatar'] if 'quote_avatar' in row.keys() else None
+        
+        if quote_avatar:
+            quote_avatar = convert_media_url(quote_avatar)
+        
+        quote_image_url = row['quote_image_url'] if 'quote_image_url' in row.keys() else None
+        if quote_image_url:
+            quote_image_url = convert_media_url(quote_image_url)
+
         # 插入推文
         d1_cursor.execute('''
             INSERT INTO tweets (tweet_id, author_id, content, type, created_at, 
-                               hashtags, urls, image_url, media_type)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                               hashtags, urls, image_url, media_type,
+                               quote_id, quote_text, quote_author_id, quote_author_name, quote_avatar, quote_image_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             row['tweet_id'],
             author_id,
@@ -352,7 +411,13 @@ def sync_data():
             row['hashtags'],
             row['urls'],
             image_url,
-            row['media_type']
+            row['media_type'],
+            quote_id,
+            quote_text,
+            quote_author_id,
+            quote_author_name,
+            quote_avatar,
+            quote_image_url
         ))
         
         synced_count += 1
