@@ -12,7 +12,10 @@
 
 ## 快速開始
 
-### 1. 安裝依賴
+### 1. 安裝及設定 Nitter
+由於公共實例極不穩定，**強烈建議使用本地 Docker 架設 Nitter**。詳細步驟請參閱 [NITTER_SETUP.md](NITTER_SETUP.md)。
+
+### 2. 安裝依賴
 
 ```bash
 pip install -r requirements.txt
@@ -47,16 +50,28 @@ pip install -r requirements.txt
 
 ### 3. 執行爬蟲
 
-```bash
-python nitter_server.py
-```
+1. **增量更新 (預設)**:
+   預設只抓取新推文，當發現連續 20 條已存在推文時自動停止。
+   ```bash
+   python nitter_server.py
+   ```
 
-或使用啟動腳本：
+2. **完整重爬**:
+   若需確保抓取所有歷史推文 (無視重複檢查)，請使用 `--full` 或 `--rescrape`。
+   ```bash
+   python nitter_server.py --full
+   ```
 
-```bash
-chmod +x run.sh
-./run.sh
-```
+3. **清空重爬**:
+   清空資料庫並從頭開始。
+   ```bash
+   python nitter_server.py --force
+   ```
+
+4. **自訂上限**:
+   ```bash
+   python nitter_server.py --limit=2000
+   ```
 
 ## 資料庫結構
 

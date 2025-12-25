@@ -26,7 +26,11 @@ class NitterScraper:
         self.config_path = config_path
         self.db_path = db_path
         self.config = self.load_config()
-        self.nitter_url = f"http://{self.config['settings']['nitter_instances'][0]}"
+        self.instances = self.config['settings'].get('nitter_instances', ['localhost:8080'])
+        self.current_instance_index = 0
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
         self.init_database()
         
     def load_config(self):
@@ -34,14 +38,20 @@ class NitterScraper:
         with open(self.config_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     
-    def init_database(self):
-        """檢查並初始化資料庫結構（保留現有資料）"""
+    def init_database(self, force_clear=False):
+        """檢查並初始化資料庫結構 (force_clear=True 時清空推文)"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # 檢查現有推文數
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tweets'")
-        table_exists = cursor.fetchone() is not None
+        if force_clear:
+            logger.info("🗑️ 正在清空現有推文以進行全面重新抓取...")
+            cursor.execute("DROP TABLE IF EXISTS tweets")
+            conn.commit()
+            table_exists = False
+        else:
+            # 檢查現有推文數
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tweets'")
+            table_exists = cursor.fetchone() is not None
         
         if table_exists:
             cursor.execute('SELECT COUNT(*) FROM tweets')
@@ -91,32 +101,84 @@ class NitterScraper:
         conn.close()
     
     
-    def scrape_user(self, username, user_id):
-        """爬取單個用戶的推文"""
+    def scrape_user(self, username, user_id, max_tweets=1000, incremental=True):
+        """爬取單個用戶的推文
+        incremental: 若為 True，當發現大量重複推文時自動停止 (預設)
+        """
         cursor = None
         all_tweets = []
         page_count = 0
         
-        while True:
-            page_count += 1
-            url = f"{self.nitter_url}/{username}"
-            if cursor:
-                url += f"?cursor={cursor}"
+        failed_instances = set()
+        
+        deep_retries = 0
+        max_deep_retries = 5  # Allow 5 deep retries (5 * 60s wait)
+
+        # 用於判斷是否該停止爬取的計數器 (連續發現已存在推文的數量)
+        consecutive_existing_count = 0
+        stop_threshold = 20  # 連續 20 條已存在則停止 (約一頁)
+        
+        while len(all_tweets) < max_tweets:
+            # Check if we exhausted all instances
+            if len(failed_instances) >= len(self.instances):
+                if deep_retries < max_deep_retries:
+                    logger.warning(f"⚠️ 所有實例 ({len(self.instances)} 個) 皆失敗或被限制。Deep Retry {deep_retries+1}/{max_deep_retries}：暫停 60 秒後重試...")
+                    time.sleep(60)
+                    failed_instances = set()
+                    deep_retries += 1
+                    # Force instance rotation logic to pick a fresh one effectively
+                    self.current_instance_index = (self.current_instance_index + 1) % len(self.instances)
+                else:
+                    logger.error("❌ 所有實例皆失敗且已達 Deep Retry 上限，停止爬取該用戶")
+                    break
+
+            instance = self.get_working_instance(exclude=failed_instances)
+            protocol = 'http' if 'localhost' in instance or instance.split(':')[0].replace('.','').isdigit() else 'https'
+            nitter_url = f"{protocol}://{instance}"
             
-            logger.info(f"爬取 {username} 第 {page_count} 頁: {url}")
+            url = f"{nitter_url}/{username}"
+            if cursor:
+                if '?' in url:
+                    url += f"&cursor={cursor}"
+                else:
+                    url += f"?cursor={cursor}"
+            
+            logger.info(f"爬取 {username} 第 {page_count} 頁 (實例: {instance}) [已收錄: {len(all_tweets)}/{max_tweets}]: {url}")
             
             try:
-                response = requests.get(url, timeout=10)
+                # 模擬真人延遲 (3-7秒)
+                time.sleep(random.uniform(3, 7))
+                
+                response = requests.get(url, headers=self.headers, timeout=20)
+                if response.status_code == 429:
+                    logger.warning(f"⚠️ 實例 {instance} 速率限制 (429)，更換實例...")
+                    failed_instances.add(instance)
+                    continue
+                
                 response.raise_for_status()
                 soup = BeautifulSoup(response.content, 'html.parser')
                 
+                # Success! Reset deep retry counter
+                deep_retries = 0
+                
                 # 找到推文
                 timeline_items = soup.find_all('div', class_='timeline-item')
-                if not timeline_items:
-                    logger.info(f"沒有找到推文，停止爬取 {username}")
-                    break
+                # logger.info(f"找到 {len(timeline_items)} 個 timeline-item")
                 
+                if not timeline_items:
+                    # 有時候實例返回空頁面但不報錯，切換試試
+                    logger.warning(f"⚠️ 實例 {instance} 返回空頁面 (無 timeline-items)，標記為失敗並嘗試更換...")
+                    failed_instances.add(instance)
+                    continue
+                
+                # 成功後重置失敗名單 (因該實例證明可用)
+                failed_instances = set()
+                page_count += 1
+
                 page_tweets = []
+                # 檢查這一頁的推文有多少是數據庫裡已經有的
+                existing_in_this_page = 0
+                
                 for item in timeline_items:
                     # 跳過公告等非推文內容
                     if 'timeline-item' not in item.get('class', []):
@@ -125,36 +187,79 @@ class NitterScraper:
                     if item.find('div', class_='retweet-header'):
                         continue
                         
-                    tweet = self.parse_tweet(item, user_id)
+                    tweet = self.parse_tweet(item, user_id, nitter_url)
                     if tweet:
+                        # 檢查資料庫是否已存在
+                        if incremental:
+                            conn = sqlite3.connect(self.db_path)
+                            cur = conn.cursor()
+                            cur.execute('SELECT 1 FROM tweets WHERE tweet_id = ?', (tweet['tweet_id'],))
+                            is_exist = cur.fetchone() is not None
+                            conn.close()
+                            
+                            if is_exist:
+                                consecutive_existing_count += 1
+                                existing_in_this_page += 1
+                            else:
+                                consecutive_existing_count = 0  # 重置計數，因為發現了新推文
+                        
                         page_tweets.append(tweet)
                 
                 if page_tweets:
                     all_tweets.extend(page_tweets)
-                    logger.info(f"本頁爬取 {len(page_tweets)} 條推文，目前累計 {len(all_tweets)} 條")
+                    logger.info(f"✅ 本頁解析出 {len(page_tweets)} 條推文 (其中 {existing_in_this_page} 條已存在)")
                 
+                # 判斷是否停止 (Incremental Mode)
+                if incremental and consecutive_existing_count >= stop_threshold:
+                    logger.info(f"🛑 已連續發現 {consecutive_existing_count} 條重複推文，判定已抓取至上次進度，停止抓取本用戶。")
+                    break
+
                 # 尋找下一頁的 cursor
-                show_more = soup.find('div', class_='show-more')
-                if show_more and show_more.find('a'):
-                    href = show_more.find('a')['href']
-                    if 'cursor=' in href:
-                        cursor = href.split('cursor=')[-1]
+                show_more_divs = soup.find_all('div', class_='show-more')
+                show_more_div = None
+                
+                # 倒序尋找含有 "Load more" 的 div (模仿舊腳本邏輯)
+                for div in reversed(show_more_divs):
+                    link = div.find('a')
+                    if link and 'Load more' in link.get_text():
+                        show_more_div = div
+                        break
+                
+                if not show_more_div:
+                     # 嘗試尋找 more-replies 作為備案
+                    show_more_div = soup.find('div', class_='more-replies') or soup.find('div', id='more')
+
+                if show_more_div:
+                    link = show_more_div.find('a')
+                    if link:
+                        href = link['href']
+                        # 處理 href 為 "?cursor=..." 或 "username?cursor=..." 的情況
+                        if 'cursor=' in href:
+                            new_cursor = href.split('cursor=')[-1].split('&')[0]
+                            if new_cursor == cursor:
+                                logger.warning("⚠️ 檢測到重複 cursor，停止爬取以防止死循環")
+                                break
+                            cursor = new_cursor
+                            # logger.info(f"➡️ 取得新 cursor: {cursor[:15]}...")
+                        else:
+                            logger.info(f"下一頁連結不含 cursor ({href})，視為結束")
+                            break
                     else:
-                        logger.info("未找到下一頁 cursor，結束")
+                        logger.warning("分頁按鈕容器內找不到 <a> 標籤，視為結束")
                         break
                 else:
-                    logger.info("沒有 'Show more' 按鈕，結束")
+                    logger.info("沒有找到任何 'Load more' 按鈕，視為已達最底")
                     break
                 
-                time.sleep(2)  # 延遲避免請求過快
-                
-            except Exception as e:
-                logger.error(f"爬取過程出錯: {e}")
-                break
-        
+            except (requests.RequestException, Exception) as e:
+                logger.error(f"實例 {instance} 出錯: {e}")
+                failed_instances.add(instance)
+                logger.info("🔄 更換實例重試...")
+                time.sleep(2)
+                continue
         return all_tweets
 
-    def parse_tweet(self, item, author_id):
+    def parse_tweet(self, item, author_id, nitter_url):
         """解析單條推文"""
         try:
             # Tweet ID
@@ -188,7 +293,7 @@ class NitterScraper:
                 if 'href' in img.attrs:
                     media_url = img['href']
                     if media_url.startswith('/pic/'):
-                        media_url = self.nitter_url + media_url
+                        media_url = nitter_url + media_url
                     media_urls.append(media_url)
                     media_type = 'photo'
             
@@ -197,7 +302,7 @@ class NitterScraper:
             if video and video.find('source'):
                 video_url = video.find('source')['src']
                 if video_url.startswith('/'):
-                    video_url = self.nitter_url + video_url
+                    video_url = nitter_url + video_url
                 media_urls.append(video_url)
                 media_type = 'video'
             
@@ -250,7 +355,7 @@ class NitterScraper:
                 if quote_avatar_img and 'src' in quote_avatar_img.attrs:
                     avatar_src = quote_avatar_img['src']
                     if avatar_src.startswith('/pic/'):
-                        avatar_src = self.nitter_url + avatar_src
+                        avatar_src = nitter_url + avatar_src
                     quote_data['quote_avatar'] = avatar_src
                 
                 # 5. 取得引用推文中的圖片
@@ -260,7 +365,7 @@ class NitterScraper:
                     if q_img and 'href' in q_img.attrs:
                         q_img_url = q_img['href']
                         if q_img_url.startswith('/pic/'):
-                            q_img_url = self.nitter_url + q_img_url
+                            q_img_url = nitter_url + q_img_url
                         quote_data['quote_image_url'] = q_img_url
             
             return {
@@ -330,30 +435,53 @@ class NitterScraper:
         
         return new_count, update_count
     
-    def scrape_all(self):
+    def get_working_instance(self, exclude=None):
+        """獲取下一個可用的實例"""
+        if exclude is None:
+            exclude = set()
+            
+        # 嘗試目前實例
+        current = self.instances[self.current_instance_index]
+        if current not in exclude:
+            return current
+            
+        # 輪詢尋找下一個
+        for _ in range(len(self.instances)):
+            self.current_instance_index = (self.current_instance_index + 1) % len(self.instances)
+            candidate = self.instances[self.current_instance_index]
+            if candidate not in exclude:
+                return candidate
+        
+        # 如果全部都排除過，清空重來
+        return self.instances[0]
+
+    def scrape_all(self, force_reclean=False, limit=1000, incremental=True):
         """批量抓取所有用戶"""
+        if force_reclean:
+            # 強制重爬 => 不進行 incremental 判斷
+            incremental = False
+            self.init_database(force_clear=True)
+            
         logger.info("🚀 開始批量抓取")
-        logger.info(f"Nitter: {self.nitter_url}")
+        logger.info(f"模式: {'全部重爬 (Full/Rescrape)' if not incremental else '增量更新 (Incremental)'}")
+        logger.info(f"已加載實例: {len(self.instances)} 個")
         logger.info(f"用戶數: {len(self.config['users'])}")
+        logger.info(f"單用戶上限 (Max): {limit}")
         
         total_tweets = 0
         
-        # 從第4個用戶開始（跳過前3個）
-        start_index = 0
-        logger.info(f"⏭ 跳過前 {start_index} 個用戶，從第 {start_index + 1} 個開始")
-        
-        for user in self.config['users'][start_index:]:
+        for user in self.config['users']:
             username = user['username']
             user_id = user['id']
             
-            tweets = self.scrape_user(username, user_id)
+            tweets = self.scrape_user(username, user_id, max_tweets=limit, incremental=incremental)
             new_c, up_c = self.save_tweets(tweets, username)
             total_tweets += (new_c + up_c)
             logger.info(f"✨ {username} 完成：新增 {new_c} 條，更新 {up_c} 條")
             
-            # 每個用戶之間暫停 5-10 秒
+            # 每個用戶之間暫停 10-20 秒 (模擬真人)
             if user != self.config['users'][-1]:
-                delay = random.uniform(5, 10)
+                delay = random.uniform(10, 20)
                 logger.info(f"\n⏸ 暫停 {delay:.1f} 秒...\n")
                 time.sleep(delay)
         
@@ -363,11 +491,32 @@ class NitterScraper:
 
 
 def main():
+    import sys
+    
+    # 預設行為
+    force = False
+    limit = 1000
+    incremental = True  # 預設為增量更新
+    
+    for arg in sys.argv:
+        if arg == '--force' or arg == '--rescrape' or arg == '--full':
+            force = True
+            incremental = False  # 強制重爬時關閉增量判斷
+        if arg.startswith('--limit='):
+            try:
+                limit = int(arg.split('=')[-1])
+            except ValueError:
+                logger.warning(f"無效的 --limit 參數: {arg}. 使用預設值 {limit}")
+                
     scraper = NitterScraper(
         config_path='users.json',
         db_path='mydb.db'
     )
-    scraper.scrape_all()
+    
+    # 若有 --full / --rescrape / --force 則 incremental=False
+    # 否則 incremental=True
+    
+    scraper.scrape_all(force_reclean=force, limit=limit, incremental=incremental)
 
 
 if __name__ == '__main__':
