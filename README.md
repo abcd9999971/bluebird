@@ -1,482 +1,334 @@
-# いきづらい部！ 部員日誌
+# いきづらい部！部員日誌
 
-基於 Vue.js 3 和 Cloudflare Workers 的成員日誌應用程式，採用舊推特經典配色與現代化UI設計，完整支援桌面版和手機版響應式布局。
+基於 Vue.js 3 和 Cloudflare Workers 的成員日誌應用程式，結合 Nitter 推文爬蟲系統，提供完整的推文抓取、同步及展示功能。採用舊推特經典配色與現代化 UI 設計，完整支援桌面版和手機版響應式布局。
 
-## 目錄
+## 📋 目錄
 
+- [專案架構](#專案架構)
 - [快速開始](#快速開始)
 - [主要功能](#主要功能)
 - [技術架構](#技術架構)
-- [元件架構](#元件架構)
 - [專案結構](#專案結構)
-- [API 文件](#api-文件)
 - [開發指南](#開發指南)
+- [資料流程](#資料流程)
 - [部署說明](#部署說明)
 - [授權聲明](#授權聲明)
 
-## 快速開始
+## 🏗️ 專案架構
+
+本專案包含三個主要部分：
+
+```
+資料抓取 (Nitter) → 資料同步 (sync_to_d1.py) → 後端服務 (Cloudflare Workers) → 前端展示 (Vue.js)
+```
+
+### 核心組件
+
+1. **資料抓取層** (`data/`)
+   - Nitter 推文爬蟲系統
+   - SQLite 資料庫 (`mydb.db`)
+   - 自動化抓取腳本
+
+2. **資料同步層** (根目錄)
+   - `sync_to_d1.py` - 將 Nitter 資料同步至 Cloudflare D1
+
+3. **後端服務層** (`backend/worker/`)
+   - Cloudflare Workers API
+   - D1 資料庫管理
+   - RESTful API 端點
+
+4. **前端展示層** (`frontend/page/`)
+   - Vue.js 3 應用程式
+   - 響應式 UI 設計
+   - 成員日誌展示系統
+
+## 🚀 快速開始
 
 ### 環境要求
-- Node.js 20.19.0+ 或 22.12.0+
-- npm 或 yarn
+
+- **Node.js** 20.19.0+ 或 22.12.0+
+- **Python** 3.8+（用於資料抓取和同步）
+- **npm** 或 yarn
 
 ### 安裝與執行
 
 #### 1. 啟動後端服務
+
 ```bash
 cd backend/worker
 npm install
 npm run dev
 ```
+
 後端服務將在 `http://localhost:8787` 執行。
 
 #### 2. 啟動前端應用
+
 ```bash
 cd frontend/page
 npm install
 npm run dev
 ```
+
 前端應用將在 `http://localhost:5173` 執行。
 
-#### 3. 初始化資料庫
-後端服務啟動後，資料庫會自動使用預設的成員和推文資料。
+#### 3. 資料抓取（選用）
 
-## 主要功能
+如需從 Twitter/X 抓取新資料：
+
+```bash
+cd data
+pip install -r requirements.txt
+python nitter_server.py
+```
+
+#### 4. 資料同步
+
+將抓取的資料同步到 Cloudflare D1：
+
+```bash
+python sync_to_d1.py
+```
+
+## ✨ 主要功能
 
 ### 核心功能
-- **響應式設計**：支援桌面版、平板版和手機版，智慧布局切換
-- **成員篩選**：可依成員、年份、月份篩選推文
-- **搜尋功能**：支援推文內容和成員名稱搜尋，搜尋結果突顯顯示
-- **個人資料系統**：每個成員都有詳細的個人資料頁面
-- **日期導航器**：快速跳轉到特定日期的推文
+
+- **響應式設計** - 支援桌面版、平板版和手機版，智慧布局切換
+- **成員篩選** - 可依成員、年份、月份篩選推文
+- **搜尋功能** - 支援推文內容和成員名稱搜尋，搜尋結果突顯顯示
+- **個人資料系統** - 每個成員都有詳細的個人資料頁面
+- **日期導航器** - 快速跳轉到特定日期的推文
 
 ### 使用者體驗
-- **主題切換**：支援明暗主題切換
-- **推文互動**：按讚、分享功能
-- **下拉重新整理**：手機版下拉重新整理推文
+
+- **主題切換** - 支援明暗主題切換
+- **推文互動** - 按讚、分享功能
+- **下拉重新整理** - 手機版下拉重新整理推文
 
 ### 手機版特色
-- **手機版導航**：專為手機設計的橫向滾動導航
-- **底部導航欄**：手機版快速導航
-- **橫屏適配**：最佳化手機橫屏模式布局
-- **生日提醒**：成員生日時顯示特別提醒橫幅
 
-### 性能最佳化
-- **保守性能最佳化**：採用CSS硬體加速和圖片預載入，確保所有推文都能正常載入
-- **智慧時間軸分組**：基於節點壅擠度自動切換月份顯示模式，避免時間軸過於擁擠
-- **元件架構最佳化**：清理未使用的元件，細分功能元件，提升可重用性和可維護性
+- **手機版導航** - 專為手機設計的橫向滾動導航
+- **底部導航欄** - 手機版快速導航
+- **橫屏適配** - 最佳化手機橫屏模式布局
+- **生日提醒** - 成員生日時顯示特別提醒橫幅
 
-## 技術架構
+### 資料管理
+
+- **自動抓取** - Nitter 爬蟲批量抓取多個用戶推文
+- **增量更新** - 避免重複抓取，只獲取新推文
+- **資料同步** - 一鍵將本地資料同步至雲端 D1 資料庫
+
+## 🛠️ 技術架構
 
 ### 前端技術堆疊
-- **Vue.js 3**：使用 Composition API 和響應式系統
-- **Vite**：快速的前端建構工具
-- **Vue I18n**：國際化支援
-- **html2canvas**：推文圖片生成
+
+- **Vue.js 3** - Composition API 和響應式系統
+- **Vite** - 快速的前端建構工具
+- **Vue I18n** - 國際化支援
+- **html2canvas** - 推文圖片生成
 
 ### 後端技術堆疊
-- **Cloudflare Workers**：邊緣運算平台
-- **SQLite (D1)**：輕量級資料庫
-- **RESTful API**：標準化的 API 設計
+
+- **Cloudflare Workers** - 邊緣運算平台
+- **Cloudflare D1** - SQLite 資料庫
+- **RESTful API** - 標準化的 API 設計
+
+### 資料抓取技術
+
+- **Nitter** - Twitter/X 的開源前端
+- **Python** - 爬蟲腳本語言
+- **SQLite** - 本地資料庫
 
 ### 設計系統
-- **CSS 變數系統**：統一的設計系統和主題管理
-- **響應式設計**：支援多種螢幕尺寸和裝置，包含橫屏適配
-- **圖示系統**：Material Symbols Outlined 圖示字體
-- **字體最佳化**：Noto Sans JP 字體 CDN 載入
 
-## 元件架構
+- **CSS 變數系統** - 統一的設計系統和主題管理
+- **響應式設計** - 支援多種螢幕尺寸和裝置
+- **Material Symbols Outlined** - Google 圖示字體
+- **Noto Sans JP** - 日文字體最佳化
 
-本專案採用 Vue 3 Composition API 和模組化元件設計，遵循單一職責原則和關注點分離。
-
-### 架構設計理念
-
-1. **分層架構**：UI元件 → 業務元件 → 佈局元件 → 頁面元件
-2. **職責分離**：每個元件只負責特定功能，避免職責混雜
-3. **可重用性**：UI元件和業務元件可在不同場景中重用
-4. **狀態管理**：使用 Composables 集中管理狀態和邏輯
-5. **響應式優先**：所有元件都支援桌面、平板、手機三種尺寸
-
-### 元件層級關係
+## 📁 專案結構
 
 ```
-App.vue (根元件)
-├── 佈局元件層 (Layout Components)
-│   ├── AppLayout.vue (統一佈局包裝)
-│   ├── LayoutLeftSidebar.vue
-│   ├── LayoutPostsHeader.vue  
-│   ├── LayoutMobileNavigation.vue
-│   ├── LayoutRightSidebar.vue
-│   └── LayoutBottomNavigation.vue
-├── 檢視元件層 (View Components)
-│   └── TimelineView.vue (時間軸檢視)
-├── 容器元件層 (Container Components)
-│   ├── GlobalComponents.vue (全域元件容器)
-│   └── AppLogic.vue (應用程式邏輯容器)
-├── 推文元件層 (Post Components)
-│   ├── PostMemberHeader.vue
-│   ├── PostListContainer.vue
-│   └── PostListItem.vue
-├── 彈出視窗元件層 (Modal Components)
-│   ├── PostDetailModal.vue
-│   ├── ProfileModal.vue
-│   └── DateNavigationModal.vue
-├── UI元件層 (UI Components)
-│   ├── BaseLoader.vue
-│   ├── BaseToTopButton.vue
-│   ├── BaseToastNotification.vue
-│   ├── BaseTimelineBar.vue
-│   ├── BasePullRefreshIndicator.vue
-│   └── BaseBirthdayReminder.vue
-└── 功能元件層 (Feature Components)
-    ├── BaseSearchFeature.vue
-    ├── BaseFilterFeature.vue
-    └── BaseNavigationFeature.vue
-```
-
-### 元件分類詳解
-
-#### 佈局元件 (Layout Components)
-- **AppLayout.vue** - 統一佈局包裝，管理整體應用程式佈局結構
-- **LayoutLeftSidebar.vue** - 左側邊欄，包含主導航、搜尋、成員篩選、主題切換
-- **LayoutPostsHeader.vue** - 推文區標題列，簡化版標題顯示
-- **LayoutMobileNavigation.vue** - 手機版橫向滾動導航，成員大頭貼選擇
-- **LayoutRightSidebar.vue** - 右側邊欄，日期導航器和年月篩選
-- **LayoutBottomNavigation.vue** - 底部導航欄，手機版快速導航
-
-#### 檢視元件 (View Components)
-- **TimelineView.vue** - 時間軸檢視，整合所有時間軸相關元件和功能
-
-#### 容器元件 (Container Components)
-- **GlobalComponents.vue** - 全域元件容器，統一管理彈出視窗、通知、導航等全域元件
-- **AppLogic.vue** - 應用程式邏輯容器，集中管理所有業務邏輯、狀態和事件處理
-
-#### 推文元件 (Post Components)
-- **PostMemberHeader.vue** - 成員橫幅，顯示選擇成員的大頭貼、名稱、自我介紹按鈕
-- **PostListContainer.vue** - 推文列表容器，管理推文項目和空狀態
-- **PostListItem.vue** - 單個推文項目，包含大頭貼、內容、互動按鈕，支援點擊成員名稱篩選
-
-#### 彈出視窗元件 (Modal Components)
-- **PostDetailModal.vue** - 推文詳情彈出視窗，顯示完整推文內容
-- **ProfileModal.vue** - 個人資料彈出視窗，顯示成員詳細資訊
-- **DateNavigationModal.vue** - 手機版日期導航彈出視窗，年月日期選擇
-
-#### UI元件 (UI Components)
-- **BaseLoader.vue** - 載入動畫，資料載入時顯示
-- **BaseToTopButton.vue** - 回到頂部按鈕，長頁面滾動輔助
-- **BaseToastNotification.vue** - Toast 通知，操作結果提示
-- **BaseTimelineBar.vue** - 時間軸裝飾元件，視覺化推文分佈，智慧月份分組避免節點壅擠
-- **BasePullRefreshIndicator.vue** - 下拉重新整理指示器，手機版重新整理功能
-- **BaseBirthdayReminder.vue** - 生日提醒，成員生日時顯示
-
-#### 功能元件 (Feature Components)
-- **BaseSearchFeature.vue** - 統一搜尋功能元件，整合桌面版和手機版搜尋邏輯
-- **BaseFilterFeature.vue** - 篩選功能元件，包含成員篩選和喜歡篩選
-- **BaseNavigationFeature.vue** - 導航功能元件，包含主題切換、重設篩選、日期導航
-
-### Composables 組合式函式
-- **useApi.js** - API 請求管理，統一處理所有後端通訊
-- **useAppState.js** - 應用程式狀態管理，集中管理全域狀態
-- **useImageLoader.js** - 圖片載入管理，最佳化圖片載入效能
-- **usePullRefresh.js** - 下拉重新整理管理，手機版重新整理功能
-
-### 元件間通信機制
-
-1. **Props 向下傳遞**：父元件向子元件傳遞資料和配置
-2. **Events 向上傳遞**：子元件透過 emit 向父元件發送事件
-3. **Composables 狀態共享**：使用 `useAppState` 實現跨元件狀態共享
-4. **Provide/Inject**：深層元件間的直接通信（用於主題、配置等）
-
-### 狀態管理架構
-
-```
-useAppState (全域狀態中心)
-├── 使用者偏好 (prefs)
-│   ├── 主題設定 (dark/light)
-│   └── 語言設定
-├── 應用狀態 (ui)
-│   ├── 載入狀態
-│   ├── 彈出視窗控制
-│   └── 搜尋狀態
-├── 資料狀態
-│   ├── 推文資料 (allTweets)
-│   ├── 成員資料 (authors)
-│   └── 篩選條件 (filters)
-└── 計算屬性
-    ├── 篩選後推文 (filteredTweets)
-    ├── 可用年份 (availableYears)
-    └── 品牌顏色 (brandColor)
-```
-
-### 元件架構設計
-
-#### 分層架構設計
-- **App.vue**：根元件，專注於元件協調和 UI 結構
-- **AppLogic.vue**：邏輯容器，集中管理所有業務邏輯和狀態
-- **AppLayout.vue**：統一佈局管理，簡化 App.vue 複雜度
-- **TimelineView.vue**：時間軸檢視整合，集中時間軸相關功能
-- **GlobalComponents.vue**：全域元件容器，統一管理彈出視窗和通知
-- **功能元件**：BaseSearchFeature、BaseFilterFeature、BaseNavigationFeature 提供可重用功能
-
-#### 架構優勢
-- **職責分離**：每個元件層級職責明確，便於維護
-- **邏輯與 UI 分離**：業務邏輯集中在 AppLogic.vue，UI 結構在 App.vue
-- **可重用性**：功能元件和檢視元件可在不同場景中重用
-- **響應式設計**：所有元件自動適配桌面版和手機版
-- **易於測試**：邏輯與 UI 分離，便於單元測試和整合測試
-
-#### 元件協調機制
-
-**App.vue 設計理念：**
-- 專注於元件協調和 UI 結構
-- 元件間的資料傳遞
-- 事件通信協調
-- 載入狀態管理
-
-**AppLogic.vue 設計理念：**
-- 集中管理所有業務邏輯
-- 狀態管理（使用 Composables）
-- 事件處理方法
-- 生命週期管理
-- 狀態監聽器
-- 工具函式
-
-**維護優勢：**
-- **邏輯集中**：所有業務邏輯在 AppLogic.vue 中，便於維護
-- **UI 清晰**：App.vue 專注於 UI 結構，程式碼更清晰
-- **測試友好**：邏輯與 UI 分離，便於單元測試
-- **擴展性強**：新增功能時邏輯在 AppLogic.vue，UI 在對應元件
-
-### 元件開發指南
-
-#### 新增元件原則
-1. **單一職責**：每個元件只負責一個特定功能
-2. **可重用性**：設計時考慮在不同場景中的重用
-3. **Props 驗證**：使用 TypeScript 或 PropTypes 驗證傳入參數
-4. **事件命名**：使用動詞開頭的駝峰命名（如 `handleClick`、`onSubmit`）
-5. **樣式隔離**：使用 `scoped` 樣式避免樣式汙染
-
-#### 元件命名規範
-
-本專案遵循 Vue.js 社群公認的命名最佳實踐，使用完整單字而非縮寫，確保名稱清晰且具描述性：
-
-**檔案命名規範：**
-- **Vue元件檔案**：使用 **PascalCase**（大駝峰命名法）
-- **JavaScript工具檔案**：使用 **kebab-case**（短橫線命名法）
-- **Composables檔案**：以 `use` 前綴 + **camelCase**
-
-**元件分類命名：**
-- **基礎元件**：以 `Base` 前綴命名（如 `BaseLoader`、`BaseToastNotification`）
-- **佈局元件**：以 `Layout` 前綴命名（如 `LayoutLeftSidebar`、`LayoutBottomNavigation`）
-- **推文元件**：以 `Post` 前綴 + 功能描述（如 `PostListItem`、`PostMemberHeader`）
-- **彈出視窗元件**：以 `Modal` 後綴命名（如 `PostDetailModal`、`DateNavigationModal`）
-- **功能元件**：以 `Base` 前綴 + 功能描述（如 `BaseSearchFeature`、`BaseFilterFeature`）
-
-**命名範例：**
-```
-components/
-├── ui/
-│   ├── BaseLoader.vue           # 基礎載入器
-│   ├── BaseToastNotification.vue # 基礎通知元件
-│   └── BaseTimelineBar.vue      # 基礎時間軸裝飾元件
-├── layout/
-│   ├── LayoutLeftSidebar.vue    # 左側邊欄佈局
-│   ├── LayoutRightSidebar.vue   # 右側邊欄佈局
-│   ├── LayoutMobileNavigation.vue # 手機版導航佈局
-│   └── LayoutBottomNavigation.vue # 底部導航佈局
-├── posts/
-│   ├── PostMemberHeader.vue     # 推文成員標題
-│   ├── PostListContainer.vue    # 推文列表容器
-│   └── PostListItem.vue         # 推文列表項目
-├── features/
-│   ├── BaseSearchFeature.vue    # 基礎搜尋功能
-│   └── BaseFilterFeature.vue    # 基礎篩選功能
-└── modals/
-    ├── PostDetailModal.vue      # 推文詳情彈出視窗
-    ├── ProfileModal.vue         # 個人資料彈出視窗
-    └── DateNavigationModal.vue  # 日期導航彈出視窗
-```
-
-**JavaScript檔案命名範例：**
-```
-utils/
-├── assets.js                    # 資源管理
-├── constants.js                 # 常數定義
-├── formatters.js                # 格式化工具
-└── html2canvas-helper.js        # 圖片生成工具
-
-composables/
-├── useApi.js                    # API請求管理
-├── useAppState.js               # 應用程式狀態管理
-├── useImageLoader.js            # 圖片載入管理
-└── usePullRefresh.js            # 下拉重新整理管理
-```
-
-#### 元件目錄結構
-```
-components/
-├── index.js           # 統一匯出文件
-├── layout/            # 佈局相關元件
-├── views/             # 檢視元件
-├── containers/        # 容器元件
-├── modals/            # 彈出視窗元件
-├── posts/             # 推文相關業務元件
-├── ui/                # 通用UI元件
-└── features/          # 功能元件
-```
-
-## 專案結構
-
-```
-bluebird-master/
-├── backend/                     # 後端 Cloudflare Workers
-│   ├── worker/
-│   │   ├── src/index.ts        # 主要API邏輯
-│   │   └── schema.sql          # 資料庫結構
-│   └── package.json
-├── frontend/                    # 前端 Vue.js 應用
+bluebird/
+├── data/                          # 資料抓取系統
+│   ├── mydb.db                   # SQLite 資料庫（Nitter 爬蟲資料）
+│   ├── nitter_server.py          # Nitter 爬蟲主程式
+│   ├── nittertweets.py           # 推文抓取模組
+│   ├── users.json                # 用戶配置檔案
+│   ├── requirements.txt          # Python 依賴
+│   └── README.md                 # Nitter 使用說明
+│
+├── sync_to_d1.py                 # 資料同步腳本
+│
+├── backend/                       # 後端服務
+│   └── worker/
+│       ├── src/index.ts          # Cloudflare Workers API
+│       ├── schema.sql            # D1 資料庫結構
+│       ├── wrangler.jsonc        # Cloudflare 配置
+│       └── package.json
+│
+├── frontend/                      # 前端應用
 │   └── page/
 │       ├── src/
-│       │   ├── App.vue         # 主要應用元件
-│       │   ├── main.js         # 應用入口
-│       │   ├── components/     # Vue 元件目錄
-│       │   │   ├── index.js    # 元件統一匯出
-│       │   │   ├── layout/     # 佈局元件
-│       │   │   │   ├── AppLayout.vue      # 統一佈局包裝
-│       │   │   │   ├── LayoutLeftSidebar.vue    # 左側邊欄
-│       │   │   │   ├── LayoutPostsHeader.vue    # 推文標題列
-│       │   │   │   ├── LayoutMobileNavigation.vue      # 手機版導航
-│       │   │   │   ├── LayoutRightSidebar.vue   # 右側邊欄
-│       │   │   │   └── LayoutBottomNavigation.vue # 底部導航欄
-│       │   │   ├── views/      # 檢視元件
-│       │   │   │   └── TimelineView.vue   # 時間軸檢視
-│       │   │   ├── containers/ # 容器元件
-│       │   │   │   ├── GlobalComponents.vue # 全域元件容器
-│       │   │   │   └── AppLogic.vue # 應用程式邏輯容器
-│       │   │   ├── posts/      # 推文相關元件
-│       │   │   │   ├── PostMemberHeader.vue   # 成員橫幅
-│       │   │   │   ├── PostListContainer.vue       # 推文列表
-│       │   │   │   └── PostListItem.vue       # 推文項目
-│       │   │   ├── modals/     # 彈出視窗元件
-│       │   │   │   ├── PostDetailModal.vue  # 推文詳情彈出視窗
-│       │   │   │   ├── ProfileModal.vue     # 個人資料彈出視窗
-│       │   │   │   └── DateNavigationModal.vue     # 日期導航彈出視窗
-│       │   │   ├── ui/         # UI 通用元件
-│       │   │   │   ├── BaseLoader.vue           # 載入器
-│       │   │   │   ├── BaseToTopButton.vue      # 回到頂部按鈕
-│       │   │   │   ├── BaseToastNotification.vue # Toast 通知
-│       │   │   │   ├── BaseTimelineBar.vue      # 時間軸裝飾元件
-│       │   │   │   ├── BasePullRefreshIndicator.vue # 下拉重新整理指示器
-│       │   │   │   └── BaseBirthdayReminder.vue # 生日提醒
-│       │   │   └── features/   # 功能元件
-│       │   │       ├── BaseSearchFeature.vue    # 搜尋功能元件
-│       │   │       ├── BaseFilterFeature.vue    # 篩選功能元件
-│       │   │       └── BaseNavigationFeature.vue # 導航功能元件
-│       │   ├── composables/    # Vue 3 Composition API 組合式函式
-│       │   │   ├── useApi.js   # API 請求管理
-│       │   │   ├── useAppState.js # 應用程式狀態管理
-│       │   │   ├── useImageLoader.js # 圖片載入管理
-│       │   │   └── usePullRefresh.js # 下拉重新整理管理
-│       │   ├── utils/          # 工具函式
-│       │   │   ├── assets.js   # 資源管理
-│       │   │   ├── constants.js # 常數定義
-│       │   │   ├── formatters.js # 格式化工具
-│       │   │   └── html2canvas-helper.js # 圖片分享
-│       │   ├── member.json     # 成員資料檔案
-│       │   ├── post.json       # 推文資料檔案
-│       │   ├── locales/        # 國際化語言檔案
-│       │   │   └── ja.json     # 日文語言檔案
-│       │   ├── i18n.js         # 國際化配置
-│       │   └── assets/
-│       │       └── styles.css  # 全域樣式檔案
+│       │   ├── App.vue           # 主應用元件
+│       │   ├── main.js           # 應用入口
+│       │   ├── components/       # Vue 元件
+│       │   │   ├── layout/       # 佈局元件
+│       │   │   ├── posts/        # 推文元件
+│       │   │   ├── modals/       # 彈出視窗
+│       │   │   ├── ui/           # UI 元件
+│       │   │   └── features/     # 功能元件
+│       │   ├── composables/      # Composition API
+│       │   ├── utils/            # 工具函式
+│       │   ├── locales/          # 國際化
+│       │   └── assets/           # 靜態資源
+│       ├── vite.config.js
 │       └── package.json
-└── README.md
+│
+├── DEPLOYMENT.md                  # 部署指南
+└── README.md                      # 本文件
 ```
 
-## API 文件
+## 💻 開發指南
 
-### 端點列表
+### 資料抓取流程
+
+1. **配置用戶** - 編輯 `data/users.json` 設定要抓取的 Twitter/X 用戶
+2. **執行爬蟲** - 運行 `python data/nitter_server.py`
+3. **檢查資料** - 資料會儲存至 `data/mydb.db`
+
+詳細說明請參考 [`data/README.md`](data/README.md)
+
+### 資料同步流程
+
+`sync_to_d1.py` 腳本會：
+
+1. 從 `data/mydb.db` 讀取 Nitter 爬蟲資料
+2. 轉換資料格式符合 D1 資料庫結構
+3. 同步至 `backend/worker/.wrangler/state/v3/d1/.../db.sqlite`
+4. 本地開發環境即可使用最新資料
+
+```bash
+# 執行資料同步
+python sync_to_d1.py
+```
+
+### API 端點
+
+後端提供以下 API 端點：
+
 - `GET /api/members` - 獲取所有成員資訊
 - `GET /api/tweets` - 獲取推文列表（支援篩選）
+  - 參數：`author`, `year`, `month`, `search`, `limit`, `offset`
 - `GET /api/stats` - 獲取統計資訊
 - `POST /api/tweets` - 新增推文
 - `POST /api/likes` - 處理喜歡/取消喜歡
 - `GET /api/likes/status` - 獲取喜歡狀態
 
-### 請求參數
+### 元件開發
 
-#### GET /api/tweets
-- `author` (string): 成員ID篩選
-- `year` (string): 年份篩選
-- `month` (string): 月份篩選
-- `search` (string): 搜尋關鍵字
-- `limit` (number): 每頁數量，預設50
-- `offset` (number): 偏移量，預設0
+前端採用模組化元件設計：
 
-#### POST /api/likes
-```json
-{
-  "tweetId": 123,
-  "userIp": "127.0.0.1",
-  "action": "like" // 或 "unlike"
-}
+- **佈局元件** (`layout/`) - 頁面結構和導航
+- **推文元件** (`posts/`) - 推文顯示和互動
+- **彈出視窗** (`modals/`) - 詳情和個人資料
+- **UI 元件** (`ui/`) - 可重用基礎元件
+- **功能元件** (`features/`) - 搜尋、篩選等功能
+
+詳細的元件架構說明請參考完整 README 的「元件架構」章節。
+
+### 國際化
+
+使用 Vue I18n 進行文字管理：
+
+- 語言包位於 `frontend/page/src/locales/`
+- 目前支援日文 (`ja.json`)
+- 可輕鬆擴展至其他語言
+
+## 🔄 資料流程
+
+### 完整資料流
+
+```
+1. Twitter/X 推文
+   ↓
+2. Nitter 爬蟲抓取 (data/nitter_server.py)
+   ↓
+3. 存入本地 SQLite (data/mydb.db)
+   ↓
+4. 資料同步腳本 (sync_to_d1.py)
+   ↓
+5. Cloudflare D1 資料庫 (本地/雲端)
+   ↓
+6. Workers API (backend/worker)
+   ↓
+7. Vue.js 前端展示 (frontend/page)
 ```
 
-## 開發指南
+### 開發環境資料流
 
-### 資料檔案管理
-- **`member.json`**：存放成員的靜態資料，包含姓名、顏色、個人資料等
-- **`post.json`**：存放推文的備用資料，當後端連線失敗時使用
-- 這些 JSON 檔案會在應用程式啟動時載入，並透過 `utils/assets.js` 中的函式處理動態屬性
+```
+data/mydb.db → sync_to_d1.py → backend/worker/.wrangler/...db.sqlite
+                                         ↓
+                                   localhost:8787 (API)
+                                         ↓
+                                   localhost:5173 (前端)
+```
 
-### 工具函式模組
-- **`utils/constants.js`**：統一管理應用程式常數，包含成員顏色、API 端點、儲存鍵值等
-- **`utils/formatters.js`**：提供時間、文字、數字等格式化功能
-- **`utils/assets.js`**：處理靜態資源載入和成員資料處理
-- **`utils/html2canvas-helper.js`**：圖片分享功能，將推文轉換為圖片
+### 生產環境資料流
 
-### 國際化支援
-- 使用 [vue-i18n](https://vue-i18n.intlify.dev/) 進行文字管理
-- 目前支援日文，語言包位於 `src/locales/ja.json`
-- 所有 UI 文字都透過 `t()` 函式進行翻譯
-- 未來可輕鬆擴展至其他語言，只需添加對應的語言包檔案
+```
+data/mydb.db → sync_to_d1.py → 匯出 SQL → wrangler d1 execute
+                                              ↓
+                                         Cloudflare D1
+                                              ↓
+                                         Workers API
+                                              ↓
+                                         Cloudflare Pages
+```
 
-### 新增推文
-推文會自動從後端資料庫載入，支援即時更新。目前已包含100條測試推文，涵蓋2025-2026年的完整時間軸，方便測試各種功能。測試推文內容貼近角色特色，同時明確標示為測試用途。
+## 🚀 部署說明
 
-### 性能最佳化
-- **保守的CSS最佳化**：使用CSS硬體加速（transform: translateZ(0)）和contain屬性來最佳化繪製性能
-- **圖片預載入**：在元件載入時預載入所有成員大頭貼，提升使用者體驗
-- **圖片繪製最佳化**：使用image-rendering屬性最佳化圖片顯示品質
-- **簡化架構**：採用直接繪製確保穩定性，移除複雜的虛擬滾動機制
-- **智慧時間軸分組**：基於節點壅擠度自動切換月份顯示模式，避免時間軸過於擁擠
-- **元件架構最佳化**：清理未使用的元件，細分功能元件，提升可重用性和可維護性
+詳細部署指南請參考 [DEPLOYMENT.md](DEPLOYMENT.md)
 
-### 自訂樣式
-所有樣式都在 `frontend/page/src/assets/styles.css` 中定義，使用CSS變數系統。
+### 快速部署
 
-### 響應式設計
-專案完全支援響應式設計，在不同螢幕尺寸下都有良好的使用體驗。
+#### 後端部署
 
-## 部署說明
-
-### 後端部署
 ```bash
 cd backend/worker
-npm run deploy
+wrangler deploy
 ```
 
-### 前端部署
+#### 前端部署
+
 ```bash
 cd frontend/page
 npm run build
+npx wrangler pages deploy dist
 ```
 
-## 貢獻
+#### 資料更新
 
-歡迎提交Issue和Pull Request來改善這個專案。
+```bash
+# 1. 抓取新推文
+python data/nitter_server.py
 
-## 授權聲明
+# 2. 同步到本地 D1
+python sync_to_d1.py
+
+# 3. 匯出並上傳到雲端
+cd backend/worker
+sqlite3 .wrangler/state/v3/d1/miniflare-D1DatabaseObject/db.sqlite .dump > data.sql
+wrangler d1 execute bluebird-db --file=./data.sql
+```
+
+## 🤝 貢獻
+
+歡迎提交 Issue 和 Pull Request 來改善這個專案。
+
+## 📄 授權聲明
 
 ### 版權聲明
 
@@ -493,3 +345,18 @@ npm run build
 [ガイドライン | イキヅライブ！ LOVELIVE! BLUEBIRD](https://www.lovelive-anime.jp/lovehigh/guideline/)
 
 如有任何疑問或需要進一步資訊，請參閱上述官方連結。
+
+---
+
+## 📚 相關文件
+
+- [部署指南](DEPLOYMENT.md) - Cloudflare 部署完整說明
+- [Nitter 爬蟲說明](data/README.md) - 資料抓取系統使用指南
+- [前端資源說明](frontend/page/ASSETS_README.md) - 前端資源管理
+
+## 🔗 相關連結
+
+- [Cloudflare Workers 文件](https://developers.cloudflare.com/workers/)
+- [Cloudflare D1 文件](https://developers.cloudflare.com/d1/)
+- [Vue.js 3 文件](https://vuejs.org/)
+- [Vite 文件](https://vitejs.dev/)

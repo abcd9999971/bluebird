@@ -42,6 +42,20 @@
       <!-- 推文內容 -->
       <div class="tweet-text" v-html="linkify(tweet.content, searchTerm)" @click="handleTweetTextClick"></div>
       
+      <!-- 推文媒體（如果有圖片） -->
+      <div v-if="tweet.image_url || tweet.media_urls" class="tweet-media">
+        <img 
+          :src="tweet.image_url || tweet.media_urls" 
+          :alt="'推文圖片'"
+          class="tweet-image"
+          loading="lazy"
+          @click.stop="openMediaPreview"
+        />
+        <div v-if="tweet.media_type" class="media-badge">
+          <span class="icon">{{ tweet.media_type === 'photo' ? 'image' : 'play_circle' }}</span>
+        </div>
+      </div>
+      
       <!-- 推文操作按鈕 -->
       <div class="tweet-actions">
         <!-- 喜歡按鈕 -->
@@ -142,6 +156,10 @@ const toggleTimeFormat = () => {
   showFullTime.value = !showFullTime.value;
 };
 
+// 事件處理函數 - 開啟媒體預覽（開啟詳情模態框）
+const openMediaPreview = () => {
+  openDetail(props.tweet);
+};
 
 
 
@@ -299,6 +317,52 @@ onBeforeUnmount(() => {
   padding: 1px 2px;
   border-radius: 2px;
   font-weight: 600;
+}
+
+/* 推文媒體樣式 */
+.tweet-media {
+  position: relative;
+  margin-top: var(--spacing-unit);
+  margin-bottom: var(--spacing-unit);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.tweet-image {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+  cursor: zoom-in;
+  transition: var(--transition-fast);
+}
+
+.tweet-image:hover {
+  opacity: 0.95;
+  transform: scale(1.01);
+}
+
+.media-badge {
+  position: absolute;
+  top: calc(var(--spacing-unit) * 0.5);
+  right: calc(var(--spacing-unit) * 0.5);
+  background-color: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
+  backdrop-filter: blur(8px);
+  padding: calc(var(--spacing-unit) * 0.5);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 0.25);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  pointer-events: none;
+}
+
+.media-badge .icon {
+  font-size: 18px;
 }
 
 .tweet-actions {

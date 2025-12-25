@@ -11,7 +11,7 @@ import { useImageLoader } from '../../composables/useImageLoader.js';
 import { usePullRefresh } from '../../composables/usePullRefresh.js';
 import { shareTweetAsImage } from '../../utils/html2canvas-helper.js';
 import { processMemberData } from '../../utils/assets.js';
-import fallbackTweetsData from '../../data/post.json';
+import fallbackTweetsData from '../../data/tweets.json';
 import fallbackMembersData from '../../data/member.json';
 
 /**
@@ -460,6 +460,7 @@ const initData = async () => {
     // 載入備用推文資料
     const processedFallbackTweets = fallbackTweetsData.map(tw => ({
       id: tw.id,
+      tweet_id: tw.tweet_id || tw.id,
       author_id: tw.author_id,
       name_ja: authors[tw.author_id]?.name_ja || tw.author_id,
       twitter_id: authors[tw.author_id]?.twitter_id || `@${tw.author_id}`,
@@ -467,7 +468,11 @@ const initData = async () => {
       avatar_url: authors[tw.author_id]?.avatar_url || '',
       created_at: tw.created_at,
       content: tw.content,
-      image_url: null,
+      type: tw.type || 'Tweet',
+      hashtags: tw.hashtags || null,
+      urls: tw.urls || null,
+      image_url: tw.image_url || null,
+      media_type: tw.media_type || null,
       liked: false,
       _pop: false
     }));
