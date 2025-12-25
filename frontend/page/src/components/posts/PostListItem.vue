@@ -20,8 +20,9 @@
           <span 
             class="tweet-name clickable" 
             @click.stop="filterByMember(tweet.author_id)"
+            :style="authorNameStyle"
           >
-            {{ tweet.name_ja || authors[tweet.author_id]?.name_ja || tweet.author_id }}@いきづらい部！
+            {{ authorDisplayName }}
           </span>
           <span 
             class="tweet-id clickable" 
@@ -41,7 +42,7 @@
       </div>
       
       <!-- 推文內容 -->
-      <div class="tweet-text" v-html="linkify(tweet.content, searchTerm)" @click.stop="handleTweetTextClick"></div>
+      <div class="tweet-text" v-html="linkify(processedContent, searchTerm)" @click.stop="handleTweetTextClick"></div>
       
       <!-- 推文媒體（如果有圖片） -->
       <div v-if="tweet.image_url || tweet.media_urls" class="tweet-media" @click.stop>
@@ -158,6 +159,42 @@ const toggleTimeFormat = () => {
   showFullTime.value = !showFullTime.value;
 };
 
+// 檢查是否包含特定 hashtag
+const hasProjectTag = computed(() => {
+  return props.tweet.content && props.tweet.content.includes('#いきづらい部');
+});
+
+// 處理後的推文內容：移除特定 hashtag
+const processedContent = computed(() => {
+  if (!props.tweet.content) return '';
+  // 移除 #いきづらい部，並清理可能留下的多餘空白
+  return props.tweet.content.replace(/#いきづらい部\s*/g, '');
+});
+
+// 推文樣式：移除之前的卡片染色邏輯
+// const tweetStyle = computed(...) -> Removed based on feedback
+
+// 作者顯示名稱：根據是否有 hashtag 決定是否顯示 @いきづらい部！
+const authorDisplayName = computed(() => {
+  const baseName = props.tweet.name_ja || props.authors[props.tweet.author_id]?.name_ja || props.tweet.author_id;
+  if (hasProjectTag.value) {
+    return `${baseName}@いきづらい部！`;
+  } else {
+    return baseName;
+  }
+});
+
+// 作者名稱樣式：如果有 hashtag，使用成員印象色
+const authorNameStyle = computed(() => {
+  if (hasProjectTag.value) {
+    const authorColor = props.authors[props.tweet.author_id]?.color;
+    if (authorColor) {
+      return { color: authorColor };
+    }
+  }
+  return {};
+});
+
 // 事件處理函數 - 開啟媒體預覽（開啟詳情模態框）
 const openMediaPreview = () => {
   openDetail(props.tweet);
@@ -209,6 +246,8 @@ onBeforeUnmount(() => {
   box-shadow: var(--shadow-3);
   z-index: 5;
 }
+
+
 
 .tweet-avatar {
   width: 48px;

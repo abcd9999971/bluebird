@@ -54,26 +54,31 @@
       @openProfileModal="openProfileModal"
     />
 
-    <!-- 推文列表 (List View) -->
-    <PostListContainer 
-      v-if="viewMode === 'list'"
-      :filteredTweets="filteredTweets"
-      :authors="authors"
-      :ui="ui"
-      :searchTerm="filters.search"
-      @openDetail="openDetail"
-      @toggleLike="toggleLike"
-      @shareTweet="shareTweet"
-      @handleTweetTextClick="handleTweetTextClick"
-      @filterByMember="setMemberFilter"
-    />
+    <!-- 推文列表與媒體網格切換 -->
+    <Transition name="fade" mode="out-in">
+      <div v-if="viewMode === 'list'" key="list">
+        <!-- 推文列表 (List View) -->
+        <PostListContainer 
+          :filteredTweets="filteredTweets"
+          :authors="authors"
+          :ui="ui"
+          :searchTerm="filters.search"
+          @openDetail="openDetail"
+          @toggleLike="toggleLike"
+          @shareTweet="shareTweet"
+          @handleTweetTextClick="handleTweetTextClick"
+          @filterByMember="setMemberFilter"
+        />
+      </div>
 
-    <!-- 媒體網格 (Gallery View) -->
-    <PostMediaGrid
-      v-else-if="viewMode === 'media'"
-      :tweets="filteredTweets"
-      @openDetail="openDetail"
-    />
+      <div v-else-if="viewMode === 'media'" key="media">
+        <!-- 媒體網格 (Gallery View) -->
+        <PostMediaGrid
+          :tweets="filteredTweets"
+          @openDetail="openDetail"
+        />
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -290,5 +295,17 @@ const handleTweetTextClick = (event) => {
   .mobile-search-container {
     display: none;
   }
+}
+
+/* 視圖切換動畫 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>

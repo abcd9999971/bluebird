@@ -140,6 +140,34 @@ html[data-theme='dark'] {
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* 2025 Modern Styling: Scrollbars & Selection */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--text-secondary) 30%, transparent);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  transition: background-color 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--brand-color) 60%, transparent);
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--brand-color) 30%, transparent);
+  color: inherit;
+}
+
 html[data-member-theme="true"] {
   --bg-stripe-base-color: var(--brand-color);
 }

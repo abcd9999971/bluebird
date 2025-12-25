@@ -69,58 +69,7 @@ def convert_media_url(nitter_url):
     
     return nitter_url
 
-def smart_format_tweet_content(text):
-    """
-    智慧格式化推文內容：確保 hashtag 前有換行
-    
-    問題背景：
-    Nitter 爬蟲未保留推文主體與 hashtag 之間的換行，導致顯示效果不佳。
-    Twitter 原始推文通常在內容和 hashtag 之間有換行，但爬蟲資料可能直接連接。
-    
-    解決方案（應急處理）：
-    1. 檢查推文是否包含 hashtag (#いきづらい部 等)
-    2. 如果 hashtag 前已有換行（\n 或 \n\n）→ 保持原樣
-    3. 如果直接連接（無換行）→ 添加一個換行
-    
-    範例：
-    輸入: "昨日は楽しかった～～～！！！#いきづらい部"
-    輸出: "昨日は楽しかった～～～！！！\n#いきづらい部"
-    
-    注意：
-    這是應急方案，理想狀態應由 Nitter 爬蟲在爬取時保留原始格式。
-    請參考 nitter_server.py 或 nittertweets.py 的 parse_tweet() 函數，
-    確保爬取時保留推文的原始換行符。
-    
-    Args:
-        text: 推文原始文字
-    
-    Returns:
-        格式化後的推文文字
-    """
-    if not text:
-        return text
-    
-    import re
-    
-    # 檢查是否包含 hashtag（以 # 開頭的詞）
-    hashtag_pattern = r'#[\w\u3000-\u9fff\u3040-\u30ff\uff00-\uffef]+'
-    
-    # 找到所有 hashtag
-    hashtags = list(re.finditer(hashtag_pattern, text))
-    
-    if not hashtags:
-        return text  # 沒有 hashtag，不處理
-    
-    # 檢查第一個 hashtag 前是否已有換行符
-    first_hashtag = hashtags[0]
-    hashtag_pos = first_hashtag.start()
-    
-    # 如果 hashtag 前面已經有換行符（\n），保持原樣
-    if hashtag_pos >= 1 and text[hashtag_pos-1] == '\n':
-        return text
-    
-    # hashtag 前面沒有換行符，添加一個
-    return text[:hashtag_pos] + '\n' + text[hashtag_pos:]
+
 
 def parse_nitter_date(date_str):
     """解析 Nitter 日期格式"""
@@ -164,7 +113,7 @@ def export_to_json():
             'id': row['id'],
             'tweet_id': str(row['tweet_id']),  # 確保是字串格式
             'author_id': row['author_id'],
-            'content': smart_format_tweet_content(row['content']),  # 智慧格式化
+            'content': row['content'],
             'type': row['type'],
             'created_at': row['created_at'],
             'hashtags': row['hashtags'],
