@@ -29,6 +29,12 @@
         <span class="icon">favorite</span>
         {{ t('filter_liked') }}
       </button>
+      
+      <!-- 引用推文篩選按鈕 -->
+      <button class="nav-btn" :class="{ active: filters.onlyQuotes }" @click="toggleQuotesFilter">
+        <span class="icon">format_quote</span>
+        {{ t('filter_quotes') }}
+      </button>
     </div>
 
       <!-- 成員篩選區域 -->
@@ -84,6 +90,7 @@ const emit = defineEmits([
   'focusSearch',        // 聚焦搜尋框
   'onSearchBlur',       // 搜尋框失去焦點
   'toggleLikedFilter',  // 切換喜愛篩選
+  'toggleQuotesFilter', // 切換引用篩選
   'setMemberFilter',    // 設定成員篩選
   'toggleTheme'         // 切換主題
 ]);
@@ -170,6 +177,9 @@ const onSearchBlur = () => emit('onSearchBlur');
 
 // 事件處理函數 - 切換喜歡篩選
 const toggleLikedFilter = () => emit('toggleLikedFilter');
+
+// 事件處理函數 - 切換引用篩選
+const toggleQuotesFilter = () => emit('toggleQuotesFilter');
 
 // 事件處理函數 - 設定成員篩選
 const setMemberFilter = (memberId) => emit('setMemberFilter', memberId);

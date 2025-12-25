@@ -11,6 +11,7 @@
       @focusSearch="focusSearch"
       @onSearchBlur="onSearchBlur"
       @toggleLikedFilter="toggleLikedFilter"
+      @toggleQuotesFilter="toggleQuotesFilter"
       @setMemberFilter="setMemberFilter"
       @toggleTheme="toggleTheme"
     />
@@ -103,6 +104,7 @@ const emit = defineEmits([
   'focusSearch',
   'onSearchBlur',
   'toggleLikedFilter',
+  'toggleQuotesFilter',
   'setMemberFilter',
   'toggleTheme',
   'setYear',
@@ -125,6 +127,10 @@ const onSearchBlur = () => {
 
 const toggleLikedFilter = () => {
   emit('toggleLikedFilter');
+};
+
+const toggleQuotesFilter = () => {
+  emit('toggleQuotesFilter');
 };
 
 const setMemberFilter = (member) => {

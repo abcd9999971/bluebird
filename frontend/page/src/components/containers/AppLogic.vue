@@ -195,12 +195,21 @@ const toggleLikedFilter = () => {
 };
 
 /**
+ * 切換引用篩選
+ * 切換是否只顯示有引用的推文
+ */
+const toggleQuotesFilter = () => { 
+  filters.onlyQuotes = !filters.onlyQuotes; 
+};
+
+/**
  * 重置所有篩選條件
  * 回到主頁狀態，清除所有篩選條件
  */
 const resetFilters = () => { 
   filters.member = null; 
   filters.onlyLiked = false; 
+  filters.onlyQuotes = false; 
   filters.search = ''; 
   if (availableYears.value.length > 0) filters.year = availableYears.value[0]; 
   filters.month = null; 
@@ -381,6 +390,7 @@ const jumpToTweet = async (tweetId, authorId) => {
   // 2. Clear basic filters
   filters.search = '';
   filters.onlyLiked = false;
+  filters.onlyQuotes = false;
   filters.month = null;
 
   // 3. Apply target filters to reveal the tweet
@@ -516,11 +526,16 @@ const initData = async () => {
   // 初始化狀態
   initializeState();
   
-  // 嘗試從後端獲取資料
+  // 嘗試從後端獲取資料（單次嘗試，不重試）
   try {
+    // 設定短超時，快速失敗
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2秒超時
+    
     // 獲取成員資料
     console.log('正在獲取成員資料...');
-    const membersData = await withRetry(() => fetchMembers());
+    const membersData = await fetchMembers();
+    clearTimeout(timeoutId);
     console.log('成員資料:', membersData);
     
     // 載入成員資料
@@ -528,7 +543,7 @@ const initData = async () => {
     
     // 獲取推文資料
     console.log('正在獲取推文資料...');
-    const tweetsData = await withRetry(() => fetchTweets());
+    const tweetsData = await fetchTweets();
     console.log('推文資料:', tweetsData);
     
     // 載入推文資料
@@ -539,8 +554,8 @@ const initData = async () => {
     console.log('推文數量:', allTweets.length);
     
   } catch (backendError) {
-    console.warn('後端連接失敗，使用備用資料:', backendError);
-    showToast('後端連接失敗，使用範例資料', 'warning');
+    console.warn('後端連接失敗，改用本地備用資料:', backendError.message);
+    // 不顯示 toast，靜默失敗
     
     // 載入備用成員資料
     const fallbackAuthors = processMemberData(fallbackMembersData);
@@ -646,6 +661,7 @@ defineExpose({
   setMonthFilter,
   setYear,
   toggleLikedFilter,
+  toggleQuotesFilter,
   resetFilters,
   openDetail,
   openProfileModal,

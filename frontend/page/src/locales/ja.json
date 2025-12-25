@@ -1,6 +1,7 @@
 {
   "main_header": "部員日誌",
   "filter_liked": "いいねした日誌",
+  "filter_quotes": "引用した日誌",
   "dark_mode_label": "テーマ切り替え",
   "empty_state_text": "該当する日誌はありません。",
   "search_placeholder": "日誌を検索",

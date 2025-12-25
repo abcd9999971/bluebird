@@ -26,6 +26,7 @@ export function useAppState() {
   const filters = reactive({
     member: null,      // 選擇的成員ID
     onlyLiked: false,  // 是否只顯示喜歡的推文
+    onlyQuotes: false, // 是否只顯示有引用的推文
     search: '',        // 搜尋關鍵字
     year: null,        // 選擇的年份
     month: null        // 選擇的月份
@@ -63,6 +64,10 @@ export function useAppState() {
 
     if (filters.onlyLiked) {
       result = result.filter(t => t.liked);
+    }
+
+    if (filters.onlyQuotes) {
+      result = result.filter(t => t.quote_id);
     }
 
     if (filters.member) {

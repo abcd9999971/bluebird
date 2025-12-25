@@ -57,6 +57,7 @@
         @focusSearch="appLogic.focusSearch"
         @onSearchBlur="appLogic.onSearchBlur"
         @toggleLikedFilter="appLogic.toggleLikedFilter"
+        @toggleQuotesFilter="appLogic.toggleQuotesFilter"
         @setMemberFilter="appLogic.setMemberFilter"
         @toggleTheme="appLogic.toggleTheme"
         @setYear="appLogic.setYear"
