@@ -210,8 +210,10 @@ onMounted(() => {
     position: sticky;
     top: 60px; /* 在標題下方 */
     z-index: 9;
-    backdrop-filter: blur(12px);
-    background-color: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+    background-color: var(--glass-bg);
+    border-bottom: var(--glass-border);
   }
 }
 </style>

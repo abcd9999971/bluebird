@@ -6,6 +6,7 @@
       :filters="filters"
       :prefs="prefs"
       :headerTitle="headerTitle"
+      v-model:viewMode="viewMode"
       @focusSearch="focusSearch"
       @toggleMobileSearch="toggleMobileSearch"
       @openDateNavigationModal="openDateNavigationModal"
@@ -53,8 +54,9 @@
       @openProfileModal="openProfileModal"
     />
 
-    <!-- 推文列表 -->
+    <!-- 推文列表 (List View) -->
     <PostListContainer 
+      v-if="viewMode === 'list'"
       :filteredTweets="filteredTweets"
       :authors="authors"
       :ui="ui"
@@ -64,6 +66,13 @@
       @shareTweet="shareTweet"
       @handleTweetTextClick="handleTweetTextClick"
       @filterByMember="setMemberFilter"
+    />
+
+    <!-- 媒體網格 (Gallery View) -->
+    <PostMediaGrid
+      v-else-if="viewMode === 'media'"
+      :tweets="filteredTweets"
+      @openDetail="openDetail"
     />
   </div>
 </template>
@@ -77,6 +86,7 @@ import LayoutPostsHeader from '../components/layout/LayoutPostsHeader.vue';
 import LayoutMobileNavigation from '../components/layout/LayoutMobileNavigation.vue';
 import PostMemberHeader from '../components/posts/PostMemberHeader.vue';
 import PostListContainer from '../components/posts/PostListContainer.vue';
+import PostMediaGrid from '../components/posts/PostMediaGrid.vue';
 
 /**
  * 時間軸視圖組件
@@ -139,6 +149,7 @@ const emit = defineEmits([
 
 // 響應式變數
 const mobileSearchInput = ref(null);
+const viewMode = ref('list');
 
 // 國際化
 const { t } = useI18n();

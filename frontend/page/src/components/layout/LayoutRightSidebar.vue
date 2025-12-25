@@ -204,11 +204,62 @@ const scrollToDate = (tweetId) => emit('scrollToDate', tweetId);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit) * 0.75);
+  padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 1);
+  padding-left: calc(var(--spacing-unit) * 3); /* Space for line */
   cursor: pointer;
-  transition: background-color var(--transition-duration) ease;
-  border-bottom: 1px solid var(--border-primary);
+  transition: all var(--transition-duration) ease;
+  border-bottom: 1px solid transparent; /* Remove standard border */
   font-size: 0.9rem;
+  position: relative;
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+}
+
+.date-list-item::before {
+  /* Vertical Line */
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: -50%;
+  bottom: -50%;
+  width: 2px;
+  background-color: var(--border-primary);
+  z-index: 0;
+}
+
+.date-list-item:first-child::before {
+  top: 50%;
+}
+
+.date-list-item:last-child::before {
+  bottom: 50%;
+}
+
+.date-list-item::after {
+  /* Dot */
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-primary);
+  transform: translateY(-50%);
+  z-index: 1;
+  transition: all 0.2s;
+}
+
+.date-list-item:hover::after {
+  border-color: var(--brand-color);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.date-list-item.active::after {
+  background-color: var(--brand-color);
+  border-color: var(--brand-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-color) 20%, transparent);
 }
 
 .date-list-item:last-child {

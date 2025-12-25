@@ -179,29 +179,35 @@ onBeforeUnmount(() => {
 .tweet {
   display: flex;
   gap: calc(var(--spacing-unit) * 1.5);
-  padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
-  border-bottom: 1px solid var(--border-primary);
-  background-color: transparent;
+  padding: calc(var(--spacing-unit) * 2);
+  margin-bottom: var(--spacing-unit);     /* Card separation */
+  margin-inline: var(--spacing-unit);     /* Side spacing */
+  border: 1px solid var(--border-primary); /* Full border */
+  border-radius: var(--radius-md);        /* Rounded corners */
+  background-color: var(--bg-surface);    /* Explicit background */
   transition: var(--transition-fast);
-  scroll-margin-top: 60px;
+  scroll-margin-top: 80px;
   cursor: pointer;
   animation: tweet-slide-in 0.4s ease-out;
-  /* 保守的優化：使用CSS硬體加速 */
+  /* Optimization */
   transform: translateZ(0);
   backface-visibility: hidden;
+  box-shadow: var(--shadow-1);
 }
 
 .tweet:hover {
   background-color: var(--bg-hover);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-2);
+  border-color: color-mix(in srgb, var(--brand-color) 30%, var(--border-primary));
 }
 
 .tweet.tweet-focused {
-  background-color: color-mix(in srgb, var(--brand-color) 10%, var(--bg-secondary));
-  border-left: 3px solid var(--brand-color);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  background-color: color-mix(in srgb, var(--brand-color) 5%, var(--bg-surface));
+  border: 2px solid var(--brand-color);
+  transform: scale(1.02);
+  box-shadow: var(--shadow-3);
+  z-index: 5;
 }
 
 .tweet-avatar {

@@ -95,15 +95,16 @@ const toggleTheme = () => emit('toggleTheme');
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: var(--bg-secondary);
-  border-top: 1px solid var(--border-primary);
+  background-color: var(--glass-bg);
+  border-top: var(--glass-border);
   display: flex;
   justify-content: space-around;
   align-items: center;
   padding: calc(var(--spacing-unit) * 0.5) 0;
   z-index: 100;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .nav-item {

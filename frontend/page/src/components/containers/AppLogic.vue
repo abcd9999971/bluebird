@@ -11,6 +11,7 @@ import { useImageLoader } from '../../composables/useImageLoader.js';
 import { usePullRefresh } from '../../composables/usePullRefresh.js';
 import { shareTweetAsImage } from '../../utils/html2canvas-helper.js';
 import { processMemberData } from '../../utils/assets.js';
+import { useMemberTheme } from '../../composables/useMemberTheme.js';
 import fallbackTweetsData from '../../data/tweets.json';
 import fallbackMembersData from '../../data/member.json';
 
@@ -58,6 +59,14 @@ const {
   CHARACTER_ORDER: characterOrder,  // 成員順序
   PROJECT_INFO: projectInfo         // 專案資訊
 } = useAppState();
+
+// === 使用成員主題管理 ===
+// 自動監聽 filters.member 變化並更新 CSS 變數
+useMemberTheme(
+  computed(() => filters.member), // 傳入 Ref 或 Computed
+  authors,
+  '#1d9bf0'
+);
 
 // === 使用 API 管理 ===
 const { 
@@ -519,11 +528,6 @@ onBeforeUnmount(() => {
 });
 
 // === 狀態監聽器 ===
-// 監聽品牌顏色變化，更新 CSS 變數
-watch(brandColor, (newColor) => {
-  document.documentElement.style.setProperty('--brand-color', newColor);
-}, { immediate: true });
-
 // 監聽篩選後推文變化，重新設定交集觀察器
 watch(filteredTweets, () => nextTick(setupIntersectionObserver));
 
@@ -532,11 +536,6 @@ watch(() => [filters.year, filters.member], () => {
   if (!availableMonths.value.includes(filters.month)) { 
     filters.month = null; 
   } 
-});
-
-// 監聽成員篩選變化，設定成員主題
-watch(() => filters.member, (memberKey) => { 
-  document.documentElement.dataset.memberTheme = !!(memberKey && authors[memberKey]); 
 });
 
 // 監聽主題變化，套用新主題
