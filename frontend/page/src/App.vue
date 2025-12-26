@@ -1,279 +1,184 @@
 <template>
-  <div class="app-container">
-    <div class="container">
-      <h1>生きづらい部 部員日誌</h1>
-      
-      <div v-if="loading" class="loading">
-        ⏳ 載入中...
-      </div>
-      
-      <div v-else-if="error" class="error">
-        ❌ 載入失敗: {{ error }}
-      </div>
-      
-      <div v-else class="timeline">
-        <div v-for="(article, index) in sortedArticles" 
-             :key="index" 
-             class="timeline-item">
-          <div class="timeline-dot"></div>
-          <div class="timeline-date">{{ formatDate(article.created_at) }}</div>
-          <div class="article-card">
-            <div class="article-header">
-              <div class="author">👤 作者 {{ article.author_id }}</div>
-            </div>
-            <div class="article-text">{{ article.text }}</div>
-          </div>
-        </div>
-      </div>
+  <!-- 
+    いきづらい部！ 部員日誌 - 主要應用程式根組件
+    
+    此組件作為整個應用程式的根組件，負責：
+    1. 應用程式的整體結構和佈局
+    2. 載入狀態的管理
+    3. 主要組件的協調和資料傳遞
+    4. 全域狀態的統一管理
+    
+    架構設計理念：
+    - 採用分層架構，將 UI 和邏輯分離
+    - 使用組合式 API 進行狀態管理
+    - 響應式設計，支援桌面版和手機版
+    - 模組化組件設計，提升可維護性
+  -->
+  <div id="app">
+    <!-- 
+      應用程式邏輯組件
+      管理所有的業務邏輯、狀態和事件處理
+      此組件不包含 UI 元素，僅作為邏輯容器
+    -->
+    <AppLogic ref="appLogic" />
+    
+    <!-- 
+      載入器組件
+      在應用程式資料載入完成前顯示載入動畫
+      確保使用者體驗的流暢性
+    -->
+    <BaseLoader v-if="!appLogic?.ui?.loaded" />
+    
+    <!-- 
+      主要應用程式界面
+      當資料載入完成後顯示完整的應用程式界面
+    -->
+    <div v-else-if="appLogic" class="app-shell">
+      <!-- 
+        應用程式佈局組件
+        負責整體的佈局結構，包含：
+        - 左側邊欄（導航、搜尋、篩選）
+        - 主要內容區域（時間軸）
+        - 右側邊欄（日期導航）
+        - 時間軸裝飾桿
+      -->
+      <AppLayout
+        :filters="appLogic.filters"
+        :ui="appLogic.ui"
+        :prefs="appLogic.prefs"
+        :authors="appLogic.authors"
+        :characterOrder="appLogic.characterOrder"
+        :dateGroups="appLogic.dateGroups"
+        :scroller="appLogic.scroller"
+        :brandColor="appLogic.brandColor"
+        :availableYears="appLogic.availableYears"
+        :availableMonths="appLogic.availableMonths"
+        @resetFilters="appLogic.resetFilters"
+        @focusSearch="appLogic.focusSearch"
+        @onSearchBlur="appLogic.onSearchBlur"
+        @toggleLikedFilter="appLogic.toggleLikedFilter"
+        @toggleQuotesFilter="appLogic.toggleQuotesFilter"
+        @setMemberFilter="appLogic.setMemberFilter"
+        @toggleTheme="appLogic.toggleTheme"
+        @setYear="appLogic.setYear"
+        @setMonthFilter="appLogic.setMonthFilter"
+        @scrollToDate="appLogic.scrollToDate"
+      >
+        <!-- 
+          時間軸視圖插槽
+          將時間軸相關的組件和功能整合在一個視圖中
+          包含：標題列、搜尋框、導航、成員橫幅、推文列表
+        -->
+        <template #timeline>
+          <TimelineView
+            :ui="appLogic.ui"
+            :filters="appLogic.filters"
+            :prefs="appLogic.prefs"
+            :authors="appLogic.authors"
+            :characterOrder="appLogic.characterOrder"
+            :projectInfo="appLogic.projectInfo"
+            :filteredTweets="appLogic.filteredTweets"
+            :headerTitle="appLogic.headerTitle"
+            @focusSearch="appLogic.focusSearch"
+            @toggleMobileSearch="appLogic.toggleMobileSearch"
+            @openDateNavigationModal="appLogic.openDateNavigationModal"
+            @onSearchBlur="appLogic.onSearchBlur"
+            @toggleTheme="appLogic.toggleTheme"
+            @resetFilters="appLogic.resetFilters"
+            @toggleLikedFilter="appLogic.toggleLikedFilter"
+            @setMemberFilter="appLogic.setMemberFilter"
+            @openProfileModal="appLogic.openProfileModal"
+            @openDetail="appLogic.openDetail"
+            @toggleLike="appLogic.toggleLike"
+            @shareTweet="appLogic.shareTweet"
+            @handleTweetTextClick="appLogic.handleTweetTextClick"
+            @jumpToTweet="appLogic.jumpToTweet"
+          />
+        </template>
+      </AppLayout>
+
+      <!-- 
+        全域組件容器
+        管理所有全域性的組件，包含：
+        - 彈窗組件（推文詳情、個人資料、日期導航）
+        - 通知組件（Toast、回到頂部按鈕）
+        - 互動組件（下拉刷新、底部導航、生日提醒）
+      -->
+      <GlobalComponents
+        :ui="appLogic.ui"
+        :filters="appLogic.filters"
+        :prefs="appLogic.prefs"
+        :authors="appLogic.authors"
+        :availableYears="appLogic.availableYears"
+        :availableMonths="appLogic.availableMonths"
+        :dateGroups="appLogic.dateGroups"
+        :scroller="appLogic.scroller"
+        :toast="appLogic.toast"
+        :pullRefreshState="appLogic.pullRefreshState"
+        :shouldShowRefreshIndicator="appLogic.shouldShowRefreshIndicator"
+        @closeAllModals="appLogic.closeAllModals"
+        @setYear="appLogic.setYear"
+        @setMonthFilter="appLogic.setMonthFilter"
+        @scrollToDate="appLogic.scrollToDate"
+        @resetFilters="appLogic.resetFilters"
+        @focusSearch="appLogic.focusSearch"
+        @toggleLikedFilter="appLogic.toggleLikedFilter"
+        @openDateNavigationModal="appLogic.openDateNavigationModal"
+        @toggleTheme="appLogic.toggleTheme"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 
-const articles = ref([]);
-const loading = ref(true);
-const error = ref(null);
+/**
+ * いきづらい部！ 部員日誌 - 主要應用程式根組件
+ * 
+ * 此組件採用最新的 Vue 3 組合式 API 設計，主要職責：
+ * 1. 作為應用程式的根組件，協調各個子組件
+ * 2. 管理應用程式的整體狀態和生命週期
+ * 3. 處理組件間的資料傳遞和事件通信
+ * 4. 提供統一的錯誤處理和載入狀態管理
+ * 
+ * 架構特色：
+ * - 分層架構：UI 層、邏輯層、資料層分離
+ * - 組合式 API：使用 Vue 3 的組合式 API 進行狀態管理
+ * - 響應式設計：支援桌面版、平板、手機三種尺寸
+ * - 模組化設計：每個組件職責明確，便於維護和測試
+ * - 國際化支援：使用 vue-i18n 進行多語言支援
+ * 
+ * 維護注意事項：
+ * - 此組件主要負責組件協調，具體業務邏輯已移至 AppLogic.vue
+ * - 新增功能時請優先考慮在對應的子組件中實現
+ * - 修改狀態管理邏輯時請同步更新 AppLogic.vue
+ * - 保持組件間的鬆耦合，避免直接操作子組件內部狀態
+ */
 
-// 計算排序後的文章（按時間倒序）
-const sortedArticles = computed(() => {
-  return articles.value.sort((a, b) => {
-    const dateA = new Date(a.created_at.replace(/\//g, '-'));
-    const dateB = new Date(b.created_at.replace(/\//g, '-'));
-    return dateB - dateA; // 倒序排列（最新的在前）
-  });
-});
+// === 組件引入 ===
+import BaseLoader from './components/ui/BaseLoader.vue';
+import AppLayout from './components/layout/AppLayout.vue';
+import TimelineView from './views/TimelineView.vue';
+import GlobalComponents from './components/containers/GlobalComponents.vue';
+import AppLogic from './components/containers/AppLogic.vue';
 
-// 格式化日期顯示
-const formatDate = (dateStr) => {
-  const date = new Date(dateStr.replace(/\//g, '-'));
-  const today = new Date();
-  const diffTime = Math.abs(today - date);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 1) {
-    return '今天';
-  } else if (diffDays === 2) {
-    return '昨天';
-  } else if (diffDays <= 7) {
-    return `${diffDays - 1} 天前`;
-  } else {
-    return dateStr;
-  }
-};
+// === 應用程式邏輯管理 ===
+// 使用 AppLogic 組件來管理所有的業務邏輯和狀態
+// 這樣可以將 App.vue 專注於組件協調和 UI 結構
+const appLogic = ref(null);
 
-onMounted(async () => {
-  try {
-
-    // 如果要使用實際 API，取消下面這行的註釋並註釋掉上面的 mockData
-    const response = await fetch('http://localhost:8787');
-    if (!response.ok) {
-        throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}`);
-    }
-    const data = await response.json();
-    articles.value = data;
-  } catch (err) {
-    error.value = err.message;
-  } finally {
-    loading.value = false;
-  }
+// === 生命週期管理 ===
+onMounted(() => {
+  // 應用程式掛載完成
+  // 所有的初始化邏輯都在 AppLogic 組件中處理
+  console.log('いきづらい部！ 部員日誌應用程式已啟動');
 });
 </script>
 
 <style scoped>
-.app-container {
-  font-family: 'Arial', sans-serif;
-  background: linear-gradient(135deg, #ffa200 0%, #552e7c 100%);
+.app-shell {
   min-height: 100vh;
-  color: #333;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-h1 {
-  text-align: center;
-  color: white;
-  font-size: 2.5rem;
-  margin-bottom: 3rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
-
-.loading, .error {
-  text-align: center;
-  font-size: 1.2rem;
-  padding: 2rem;
-  color: white;
-  background: rgba(255,255,255,0.1);
-  border-radius: 15px;
-  backdrop-filter: blur(10px);
-  margin: 2rem 0;
-}
-
-.error {
-  background: rgba(255,0,0,0.2);
-}
-
-.timeline {
-  position: relative;
-  padding-left: 3rem;
-}
-
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 1rem;
-  top: 0;
-  height: 100%;
-  width: 4px;
-  background: linear-gradient(to bottom, #fff, rgba(255,255,255,0.3));
-  border-radius: 2px;
-}
-
-.timeline-item {
-  position: relative;
-  margin-bottom: 3rem;
-  animation: fadeInUp 0.6s ease-out forwards;
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-.timeline-item:nth-child(1) { animation-delay: 0.1s; }
-.timeline-item:nth-child(2) { animation-delay: 0.2s; }
-.timeline-item:nth-child(3) { animation-delay: 0.3s; }
-.timeline-item:nth-child(4) { animation-delay: 0.4s; }
-.timeline-item:nth-child(n+5) { animation-delay: 0.5s; }
-
-@keyframes fadeInUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.timeline-dot {
-  position: absolute;
-  left: -2.7rem;
-  top: 1rem;
-  width: 20px;
-  height: 20px;
-  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-  border: 4px solid white;
-  border-radius: 50%;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  z-index: 2;
-}
-
-.timeline-date {
-  position: absolute;
-  left: -12rem;
-  top: 1rem;
-  background: rgba(255,255,255,0.9);
-  padding: 0.5rem 1rem;
-  border-radius: 25px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: #555;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  white-space: nowrap;
-  transform: translateY(-10%);
-}
-
-.article-card {
-  background: rgba(255,255,255,0.95);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255,255,255,0.2);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.article-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #ff6b6b, #ee5a24, #ffa726, #42a5f5);
-  background-size: 300% 100%;
-  animation: shimmer 3s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-.article-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-}
-
-.article-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.8rem;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
-}
-
-.author {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.article-text {
-  font-size: 1.1rem;
-  line-height: 1.8;
-  white-space: pre-line;
-  color: #444;
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding: 1rem;
-  }
-
-  h1 {
-    font-size: 2rem;
-    margin-bottom: 2rem;
-  }
-
-  .timeline {
-    padding-left: 2rem;
-  }
-
-  .timeline-date {
-    position: static;
-    display: inline-block;
-    margin-bottom: 1rem;
-    left: auto;
-    top: auto;
-  }
-
-  .timeline-dot {
-    left: -1.5rem;
-  }
-
-  .article-card {
-    padding: 1.5rem;
-  }
-
-  .author {
-    text-align: center;
-  }
+  background-color: var(--bg-primary);
 }
 </style>

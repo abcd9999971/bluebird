@@ -48,4 +48,8 @@ logs/
 *.swo
 
 # Post
-data/
+# 忽略大型二進制文件
+*.deb
+*.rpm
+*.exe
+*.dmg

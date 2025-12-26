@@ -1,0 +1,62 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "polka_lion"
+    },
+    {
+      "id": 2,
+      "username": "My_Mai_Eld"
+    },
+    {
+      "id": 3,
+      "username": "G_Akky304250"
+    },
+    {
+      "id": 4,
+      "username": "hanabistarmine"
+    },
+    {
+      "id": 5,
+      "username": "MiracleGoldSP"
+    },
+    {
+      "id": 6,
+      "username": "Noricco_U"
+    },
+    {
+      "id": 7,
+      "username": "Yukuri_talk"
+    },
+    {
+      "id": 8,
+      "username": "Rollie_twinkle"
+    },
+    {
+      "id": 9,
+      "username": "LittlegreenCom"
+    },
+    {
+      "id": 10,
+      "username": "ShaunTheBunny"
+    }
+  ],
+  "settings": {
+    "nitter_instances": [
+      "localhost:8080",
+      "nitter.tiekoetter.com",
+      "xcancel.com",
+      "nitter.privacyredirect.com",
+      "nitter.space",
+      "nuku.trabun.org",
+      "nitter.net",
+      "nitter.poast.org",
+      "lightbrd.com",
+      "nitter.catsarch.com"
+    ],
+    "request_delay": 2,
+    "user_delay": 5,
+    "max_retries": 3,
+    "description": "nitter_instances: 自建 Nitter 實例列表（優先使用）; request_delay: 每次請求間隔（秒）; user_delay: 用戶間延遲（秒）"
+  }
+}
