@@ -4,18 +4,18 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "worker",
+	"name": "bluebird-api",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-08-19",
 	"observability": {
 		"enabled": true
 	},
 	"d1_databases": [
-	{
-    	"binding": "DB",
-    	"database_name": "twitter-timeline",
-    	"database_id": "bb8807d4-3737-448c-9ae1-a06d169250cc"
-	    }
+		{
+			"binding": "DB",
+			"database_name": "twitter-timeline",
+			"database_id": "bb8807d4-3737-448c-9ae1-a06d169250cc"
+		}
 	]
 
 	/**
